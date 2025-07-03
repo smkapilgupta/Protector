@@ -8,8 +8,12 @@ import android.widget.Toast
 import androidx.security.crypto.EncryptedFile
 import androidx.security.crypto.MasterKey
 import java.io.File
+import java.io.FileOutputStream
+import java.security.SecureRandom
+import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
@@ -48,24 +52,19 @@ class EncryptedFileIo(private val context: Context) {
             }
         }
 
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        val secretKey = generateKey()
+        val cipher = Cipher.getInstance(ALGORITHM)
+        val iv = ByteArray(16).also { SecureRandom().nextBytes(it) }
+        val ivSpec = IvParameterSpec(iv)
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec)
 
-            .build()
+        val encryptedBytes = cipher.doFinal(content.toByteArray())
 
-        val encryptedFile = EncryptedFile.Builder(
-            context,
-            file,
-            masterKey,
-            EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
-        )
-            .build()
-
-        encryptedFile.openFileOutput().use {
-            it.write(content.toByteArray())
+        // Save IV + ciphertext
+        FileOutputStream(file).use { fos ->
+            fos.write(iv) // prepend IV
+            fos.write(encryptedBytes)
         }
-
-        Toast.makeText(context, "Encrypted file saved! → ${file.absolutePath}", Toast.LENGTH_LONG).show()
     }
 
     public fun readEncryptedFile(fileName: String): String {
@@ -74,20 +73,21 @@ class EncryptedFileIo(private val context: Context) {
         val file = File(documentsDir, fileName)
         if (!file.exists()) return ""
 
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
+        // Read full file contents
+        val fileBytes = file.readBytes()
 
-        val encryptedFile = EncryptedFile.Builder(
-            context,
-            file,
-            masterKey,
-            EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
-        ).build()
+        // Extract IV (first 16 bytes) and ciphertext
+        val iv = fileBytes.sliceArray(0 until 16)
+        val encryptedData = fileBytes.sliceArray(16 until fileBytes.size)
 
-        return encryptedFile.openFileInput().bufferedReader().use {
-            it.readText()
-        }
+        // Derive key (must match exactly with writeEncryptedFile())
+        val secretKey = generateKey()
+
+        val cipher = Cipher.getInstance(ALGORITHM)
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, IvParameterSpec(iv))
+
+        val decryptedBytes = cipher.doFinal(encryptedData)
+        return String(decryptedBytes)
     }
 
     public fun appendEncryptedFile(fileName: String, contentToAppend: String) {

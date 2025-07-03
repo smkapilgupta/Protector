@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         var encryptedFileIo:EncryptedFileIo=EncryptedFileIo(this)
-        encryptedFileIo.appendEncryptedFile("secrets.txt","hello world")
+        encryptedFileIo.appendEncryptedFile("secrets4.txt","hello world")
     }
 }
 

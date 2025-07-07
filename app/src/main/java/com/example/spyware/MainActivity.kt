@@ -1,9 +1,13 @@
 package com.example.spyware
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.location.Location
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,11 +22,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.spyware.ui.theme.SpywareTheme
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
+import android.provider.Settings
 
 class MainActivity : ComponentActivity() {
     private lateinit var locationRequest: LocationRequest
     private lateinit var settingsClient: SettingsClient
     private val REQUEST_CHECK_SETTINGS = 1001
+    private var mobileDialogOpen=false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,11 +75,18 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+
         var encryptedFileIo:EncryptedFileIo=EncryptedFileIo(this)
         encryptedFileIo.appendEncryptedFile("secrets4.txt","hello world")
     }
 
-    // Step 4: Handle result of user's decision
+    override fun onResume() {
+        super.onResume()
+        showEnableMobileDataDialog(this)
+        println("resumed")
+    }
+
+        // Step 4: Handle result of user's decision
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CHECK_SETTINGS) {
@@ -88,6 +101,31 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    fun showEnableMobileDataDialog(context: Context) {
+        if(!isMobileDataEnabled(context) && mobileDialogOpen==false) {
+            mobileDialogOpen=true
+            var dialog=AlertDialog.Builder(context)
+                .setTitle("Enable Mobile Data")
+                .setMessage("Mobile data is turned off. Please enable it for full functionality.")
+                .setPositiveButton("Open Settings") { _, _ ->
+                    val intent = Intent(Settings.ACTION_DATA_USAGE_SETTINGS)
+                    this.startActivity(intent)
+                }
+                .show()
+
+            dialog.setOnDismissListener {
+                mobileDialogOpen=false
+//                showEnableMobileDataDialog(context)
+            }
+        }
+    }
+
+    fun isMobileDataEnabled(context: Context): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val capabilities = cm.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+    }
 }
 
 @Composable

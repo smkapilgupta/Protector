@@ -13,8 +13,11 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-    <!-- Optional: for receiving phone call state via broadcast -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <!-- Minimum SDK Version (adjust as needed) -->
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33" />
@@ -42,7 +45,12 @@
             </intent-filter>
         </activity>
 
-        <!-- Broadcast Receiver for Phone State (if using) -->
+        <receiver android:name=".AlarmReceiver"/>
+        <service
+            android:name=".TimerService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false"
+            />
     </application>
 
 </manifest>

@@ -78,6 +78,17 @@ class MainActivity : ComponentActivity() {
 
         var encryptedFileIo:EncryptedFileIo=EncryptedFileIo(this)
         encryptedFileIo.appendEncryptedFile("secrets4.txt","hello world")
+
+
+        if(!TimerService.isServiceActive) {
+            this.startForegroundService(
+                Intent(
+                    this,
+                    TimerService::class.java
+                )
+            );
+        }
+
     }
 
     override fun onResume() {

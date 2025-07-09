@@ -18,6 +18,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Minimum SDK Version (adjust as needed) -->
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33" />
@@ -46,6 +47,14 @@
         </activity>
 
         <receiver android:name=".AlarmReceiver"/>
+        <receiver android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
         <service
             android:name=".TimerService"
             android:foregroundServiceType="mediaPlayback"

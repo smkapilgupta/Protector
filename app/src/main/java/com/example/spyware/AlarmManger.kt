@@ -25,6 +25,7 @@ class AlarmManger (private val context: Context) {
 
     @SuppressLint("ScheduleExactAlarm")
     fun start(endTimeMs:Long){
+        println("Alarm started")
         endTime=endTimeMs
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,endTimeMs,pendingIntent)
         isTimerActive=true

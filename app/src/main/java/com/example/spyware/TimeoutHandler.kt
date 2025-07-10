@@ -26,6 +26,7 @@ class TimeoutHandler: SensorEventListener {
         combinedVibrationEffect=CombinedVibration.createParallel(vibrationEffect1);
     }
     public fun alarm(){
+        println("Make noise")
         vibrator.cancel()
         vibrator.vibrate(combinedVibrationEffect)
         startPlayer(mediaQuite);

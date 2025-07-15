@@ -2,75 +2,69 @@ package com.example.spyware
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.spyware.common.Constants
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 
 class LocationService: Service() {
+    private lateinit var timeoutHandler:TimeoutHandler
+    private lateinit var alarmManger:AlarmManger
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private var startId:Int=0
     companion object {
+        public var isServiceActive=false;
     }
 
     override fun onCreate() {
-        println("LocationService: onDestroy called")
         super.onCreate()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        startForeground(1, createNotification())
-        requestLocationUpdates()    }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        println("onStartCommand called")
+        isServiceActive=true
+        createNotificationChannel();
+        timeoutHandler=TimeoutHandler(this)
+        this.startId=startId
+        startForeground(startId, createNotification(""));
+        alarmManger= AlarmManger(this)
+        alarmManger.start(Constants.timerSeconds*1000)
+        return START_STICKY
+    }
 
     override fun onDestroy() {
         println("onDestroy called")
         super.onDestroy()
+        isServiceActive=false
     }
 
     override fun onBind(intent: Intent): IBinder? {
         return null
     }
 
-    private fun createNotification(): Notification {
-        val channelId = "location_channel"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Location Service", NotificationManager.IMPORTANCE_DEFAULT)
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-        }
-        return Notification.Builder(this, channelId)
-            .setContentTitle("Location Service")
-            .setContentText("Tracking location in the background")
-            .build()
+    fun createNotificationChannel(){
+        val serviceChannel = NotificationChannel(
+            "CHANNEL_ID",
+            "Spyware Service Channel",
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(serviceChannel)
     }
 
-    private fun requestLocationUpdates() {
-        val locationRequest = LocationRequest.create().apply {
-            interval = 10000
-            fastestInterval = 5000
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
+    private fun createNotification(message:String): Notification {
+//        val pendingIntent: PendingIntent = //...
+        val notificationBuilder = NotificationCompat.Builder(this, "CHANNEL_ID")
+            .setContentTitle("Spyware")
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle())
+//            .setContentIntent(pendingIntent)
 
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
-    }
-
-    val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
-            val location = locationResult.lastLocation
-            if (location != null) {
-                val latitude = location.latitude
-                val longitude = location.longitude
-                println("GPS Updated Lat: $latitude, Lon: $longitude")
-                fusedLocationClient.removeLocationUpdates(this)
-            }
-        }
+        return notificationBuilder.build()
     }
 }

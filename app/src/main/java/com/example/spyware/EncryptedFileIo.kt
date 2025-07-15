@@ -1,100 +1,57 @@
-package com.example.spyware
 import android.content.Context
-import android.os.Bundle
-import android.os.Environment
-import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
-import androidx.security.crypto.EncryptedFile
-import androidx.security.crypto.MasterKey
 import java.io.File
 import java.io.FileOutputStream
-import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.SecretKey
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.PBEKeySpec
-import javax.crypto.spec.SecretKeySpec
+import java.io.FileInputStream
 
-class EncryptedFileIo(private val context: Context) {
-    val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-//    val documentsDir = context.filesDir
-
-    companion object {
-        private const val SECRET_PASSWORD = "YourStrongPassword123!"
-        private const val SALT = "12345678" // should be securely stored or derived
-        private const val ITERATIONS = 65536
-        private const val KEY_LENGTH = 256
-        private const val ALGORITHM = "AES/CBC/PKCS5Padding"
+// Shift each character n places backward (encode)
+private fun shiftStringBack(str: String, n: Int): String {
+    val sb = StringBuilder(str.length)
+    for (char in str) {
+        sb.append((char.code - n).toChar())
     }
+    return sb.toString()
+}
 
-    private fun generateKey(): SecretKey {
-        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-        val spec = PBEKeySpec(
-            SECRET_PASSWORD.toCharArray(),
-            SALT.toByteArray(),
-            ITERATIONS,
-            KEY_LENGTH
-        )
-        return SecretKeySpec(factory.generateSecret(spec).encoded, "AES")
+// Shift each character n places forward (decode)
+private fun shiftStringForward(str: String, n: Int): String {
+    val sb = StringBuilder(str.length)
+    for (char in str) {
+        sb.append((char.code + n).toChar())
     }
-    public fun writeEncryptedFile(fileName: String, content: String) {
-        if (!documentsDir.exists()) documentsDir.mkdirs()
+    return sb.toString()
+}
 
-        val file = File(documentsDir, fileName)
+// Write encoded data to file
+fun writeShiftedToFile(location: File, fileName: String, data: String, n: Int) {
+    try {
+        if (!location.exists()) location.mkdirs()
 
-        if (file.exists()) {
-            val deleted = file.delete()
-            if (!deleted) {
-                Toast.makeText(context, "Failed to delete existing file", Toast.LENGTH_LONG).show()
-                return
-            }
+        val shifted = shiftStringBack(data, n)
+        val file = File(location, fileName)
+        FileOutputStream(file).use { it.write(shifted.toByteArray()) }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+// Read and decode data from file
+fun readShiftedFromFile(location: File, fileName: String, n: Int): String? {
+    return try {
+        val file = File(location, fileName)
+        FileInputStream(file).use {
+            val shifted = it.readBytes().toString(Charsets.UTF_8)
+            shiftStringForward(shifted, n)
         }
-
-        val secretKey = generateKey()
-        val cipher = Cipher.getInstance(ALGORITHM)
-        val iv = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        val ivSpec = IvParameterSpec(iv)
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec)
-
-        val encryptedBytes = cipher.doFinal(content.toByteArray())
-
-        // Save IV + ciphertext
-        FileOutputStream(file).use { fos ->
-            fos.write(iv) // prepend IV
-            fos.write(encryptedBytes)
-        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
     }
+}
 
-    public fun readEncryptedFile(fileName: String): String {
-        if (!documentsDir.exists()) documentsDir.mkdirs()
-
-        val file = File(documentsDir, fileName)
-        if (!file.exists()) return ""
-
-        // Read full file contents
-        val fileBytes = file.readBytes()
-
-        // Extract IV (first 16 bytes) and ciphertext
-        val iv = fileBytes.sliceArray(0 until 16)
-        val encryptedData = fileBytes.sliceArray(16 until fileBytes.size)
-
-        // Derive key (must match exactly with writeEncryptedFile())
-        val secretKey = generateKey()
-
-        val cipher = Cipher.getInstance(ALGORITHM)
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, IvParameterSpec(iv))
-
-        val decryptedBytes = cipher.doFinal(encryptedData)
-        return String(decryptedBytes)
-    }
-
-    public fun appendEncryptedFile(fileName: String, contentToAppend: String) {
-
-        val newContent = readEncryptedFile(fileName) + contentToAppend
-
-        writeEncryptedFile(fileName,newContent)
-        Toast.makeText(context, "Appended to encrypted file! "+newContent, Toast.LENGTH_SHORT).show()
-    }
+fun appendShiftedToFile(location: File, fileName: String,data:String, n: Int) {
+    val content:String?=readShiftedFromFile(location,fileName,n)
+    val newContent = (content ?: "") + "\n" + data
+    println("halo: "+newContent)
+    writeShiftedToFile(location,fileName,newContent,n)
 }

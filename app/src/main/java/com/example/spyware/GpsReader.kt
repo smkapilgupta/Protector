@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.app.ActivityManager
 import android.app.AlertDialog
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
@@ -51,10 +52,10 @@ class GpsReader(private val context: Context) {
                 location?.let {
                     val latitude = it.latitude
                     val longitude = it.longitude
-                    println("GPS Lat: $latitude+ Lon: $longitude")
+                    println("GPS Lat: $latitude Lon: $longitude")
                 } ?: run {
                     println("GPS Location is null request updates instead")
-//                    requestLocationUpdates()
+                    requestLocationUpdates()
 //                    showEnableMobileDataDialog(context)
                     startMainActivity()
                     TimeoutHandler(context).alarm()
@@ -127,4 +128,41 @@ class GpsReader(private val context: Context) {
             }
 
     }
+
+//    private fun requestLocationUpdates() {
+//        val locationRequest = LocationRequest.Builder(
+//            Priority.PRIORITY_HIGH_ACCURACY, // priority
+//            10000L                           // interval in ms
+//        ).apply {
+//            setMinUpdateIntervalMillis(5000L) // optional: minimum time between updates
+//        }.build()
+//        val locationCallback = object : LocationCallback() {
+//            override fun onLocationResult(locationResult: LocationResult) {
+//                val location = locationResult.lastLocation
+//                if (location != null) {
+//                    val latitude = location.latitude
+//                    val longitude = location.longitude
+//                    println("GPS Updated Lat: $latitude, Lon: $longitude")
+//                    fusedLocationClient.removeLocationUpdates(this)
+//                }
+//            }
+//        }
+//
+//        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+//    }
+    private fun requestLocationUpdates() {
+        val request = LocationRequest.create().apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = Priority.PRIORITY_HIGH_ACCURACY
+        }
+
+        fusedLocationClient.requestLocationUpdates(request, getPendingIntent())
+    }
+
+    private fun getPendingIntent(): PendingIntent {
+        val intent = Intent(context, LocationReceiver::class.java)
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
+
 }

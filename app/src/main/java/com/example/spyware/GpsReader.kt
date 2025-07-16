@@ -26,6 +26,8 @@ import androidx.core.content.ContextCompat.startActivity
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.SettingsClient
+import log
+import org.json.JSONObject
 
 class GpsReader(private val context: Context) {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -52,9 +54,11 @@ class GpsReader(private val context: Context) {
                 location?.let {
                     val latitude = it.latitude
                     val longitude = it.longitude
-                    println("GPS Lat: $latitude Lon: $longitude")
+                    log(context, JSONObject().put("latitude",latitude).put("longitude",longitude))
+//                    println("GPS Lat: $latitude Lon: $longitude")
                 } ?: run {
-                    println("GPS Location is null request updates instead")
+                    log(context, JSONObject().put("error","Unable to read location data"))
+
 //                    requestLocationUpdates()
 //                    showEnableMobileDataDialog(context)
 //                    LocationService.startMainActivity()

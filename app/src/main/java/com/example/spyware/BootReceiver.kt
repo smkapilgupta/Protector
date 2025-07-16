@@ -4,10 +4,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import log
+import org.json.JSONObject
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
+            log(context,JSONObject().put("message","Phone restarted"))
             val serviceIntent = Intent(context, MainService::class.java)
 
             // If starting a foreground service

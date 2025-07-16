@@ -21,6 +21,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.spyware.ui.theme.SpywareTheme
 import android.provider.Settings
 import appendShiftedToFile
+import log
+import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
     private var mobileDialogOpen=false
@@ -28,6 +30,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         println("Created MainActivity")
+        log(this,JSONObject().put("message","MainActivity started"))
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -47,8 +50,8 @@ class MainActivity : ComponentActivity() {
 
 
 //        appendShiftedToFile(this.filesDir,"secrets.txt","hello world",4)
-        appendShiftedToFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),"23423424.txt","hello world",4)
-
+//        appendShiftedToFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),"23423424.txt","hello world",4)
+//        log(this, JSONObject().put("hello","world"))
 
 //        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
 //        startActivity(intent)
@@ -72,6 +75,7 @@ class MainActivity : ComponentActivity() {
 
     fun showEnableInternetDialog(context: Context) {
         if(!isConnectedToInternet(context) && mobileDialogOpen==false) {
+            log(context,JSONObject().put("error","Not connected to internet."))
             mobileDialogOpen=true
             var dialog=AlertDialog.Builder(context)
                 .setTitle("Enable internet access")

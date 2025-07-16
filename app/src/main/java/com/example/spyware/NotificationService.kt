@@ -13,13 +13,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
 class NotificationService: Service() {
-    private lateinit var timeoutHandler:TimeoutHandler
-    private lateinit var alarmManger:AlarmManger
-
     private var startId:Int=0
-    companion object {
-        public var isServiceActive=false;
-    }
 
     override fun onCreate() {
         super.onCreate()
@@ -27,20 +21,15 @@ class NotificationService: Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         println("onStartCommand called")
-        isServiceActive=true
         createNotificationChannel();
-        timeoutHandler=TimeoutHandler(this)
         this.startId=startId
-        startForeground(1, createNotification("Something wrong with settings. Please open app."));
-        alarmManger= AlarmManger(this)
-        alarmManger.start(Constants.timerSeconds*1000)
+        startForeground(1, createNotification("Make sure location and internet are available. Tap to open app."));
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
         println("onDestroy called")
         super.onDestroy()
-        isServiceActive=false
     }
 
     override fun onBind(intent: Intent): IBinder? {
@@ -68,9 +57,9 @@ class NotificationService: Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         return NotificationCompat.Builder(this, "CHANNEL_ID")
-            .setContentTitle("Family Bond")
+            .setContentTitle("Protector")
             .setContentText(message)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.mipmap.helmet_notification)
             .setContentIntent(pendingIntent) // 👈 This line makes the notification clickable
             .setAutoCancel(true) // Optional: dismiss notification when clicked
             .build()

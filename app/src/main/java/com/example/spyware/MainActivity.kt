@@ -52,16 +52,14 @@ class MainActivity : ComponentActivity() {
 
 //        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
 //        startActivity(intent)
-        if(!LocationService.isServiceActive) {
+        if(!MainService.isServiceActive) {
             this.startForegroundService(
                 Intent(
                     this,
-                    LocationService::class.java
+                    MainService::class.java
                 )
             );
         }
-
-
     }
 
     override fun onResume() {

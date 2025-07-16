@@ -48,7 +48,9 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".AlarmReceiver"/>
+        <receiver android:name=".AlarmReceiver"
+            android:exported="true"
+            android:enabled="true"/>
         <receiver android:name=".BootReceiver"
             android:enabled="true"
             android:exported="true">
@@ -58,8 +60,13 @@
             </intent-filter>
         </receiver>
         <service
-            android:name=".LocationService"
+            android:name=".MainService"
             android:foregroundServiceType="location"
+            android:exported="false"
+            />
+        <service
+            android:name=".NotificationService"
+            android:foregroundServiceType="mediaPlayback"
             android:exported="false"
             />
     </application>

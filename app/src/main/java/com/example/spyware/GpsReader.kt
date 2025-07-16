@@ -57,6 +57,7 @@ class GpsReader(private val context: Context) {
                     println("GPS Location is null request updates instead")
 //                    requestLocationUpdates()
 //                    showEnableMobileDataDialog(context)
+//                    LocationService.startMainActivity()
                     startMainActivity()
                     TimeoutHandler(context).alarm()
                 }
@@ -64,21 +65,34 @@ class GpsReader(private val context: Context) {
     }
 
     fun startMainActivity(){
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val runningTasks = activityManager.appTasks
-
-        val isMainActivityOnTop = runningTasks.any { task ->
-            val baseIntent = task.taskInfo.baseIntent
-            val topActivity = task.taskInfo.topActivity
-            topActivity?.className == MainActivity::class.java.name
+        val intent = Intent(context, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+        context.startActivity(intent)
 
-        if (!isMainActivityOnTop) {
-            val intent = Intent(context, MainActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(intent)
-        }
+//        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+//        val runningTasks = activityManager.appTasks
+//
+//        val isMainActivityOnTop = runningTasks.any { task ->
+//            val baseIntent = task.taskInfo.baseIntent
+//            val topActivity = task.taskInfo.topActivity
+//            topActivity?.className == MainActivity::class.java.name
+//        }
+//
+//        if (!isMainActivityOnTop) {
+//            val intent = Intent(context, MainActivity::class.java).apply {
+//                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//            }
+//            context.startActivity(intent)
+//        }
+
+        context.startForegroundService(
+            Intent(
+                context,
+                NotificationService::class.java
+            )
+        );
+
     }
 
     fun grantLocationPermission(activity:Activity){

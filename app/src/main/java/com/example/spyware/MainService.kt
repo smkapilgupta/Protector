@@ -7,13 +7,10 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.spyware.common.Constants
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 
-class LocationService: Service() {
+class MainService: Service() {
     private lateinit var timeoutHandler:TimeoutHandler
     private lateinit var alarmManger:AlarmManger
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private var startId:Int=0
     companion object {
@@ -22,7 +19,6 @@ class LocationService: Service() {
 
     override fun onCreate() {
         super.onCreate()
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

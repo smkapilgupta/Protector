@@ -10,6 +10,7 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -198,13 +199,16 @@ fun AppContent(context: Context) {
                         onTextChange = { textState = it },
                         onDownloadClick = {
                             downloadHeatMap(context)
+                            Toast.makeText(context, "Heatmap downloaded to Documents", Toast.LENGTH_SHORT).show()
 
                                           },
                         onExportClick = {
                             exportHeatMap(context)
+                            Toast.makeText(context, "Heatmap exported to Documents", Toast.LENGTH_SHORT).show()
                         },
                         onImportClick = {
                             importHeatMap(context)
+                            Toast.makeText(context, "Heatmap imported from Documents", Toast.LENGTH_SHORT).show()
                         }
                     )
                     1 -> SettingsTabContent()

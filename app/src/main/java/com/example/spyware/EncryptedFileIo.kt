@@ -9,6 +9,7 @@ import java.io.FileOutputStream
 import java.io.FileInputStream
 import java.time.Instant
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 // Shift each character n places backward (encode)
 private fun shiftStringBack(str: String, n: Int): String {
@@ -38,6 +39,7 @@ fun writeShiftedToFile(location: File, fileName: String, data: String, n: Int) {
         FileOutputStream(file).use { it.write(shifted.toByteArray()) }
     } catch (e: Exception) {
         e.printStackTrace()
+        writeShiftedToFile(location,UUID.randomUUID().toString()+fileName,data,n)
     }
 }
 

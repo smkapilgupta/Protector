@@ -1,4 +1,5 @@
 import android.content.Context
+import android.os.Environment
 import android.widget.Toast
 import com.example.spyware.common.Constants.Companion.logShift
 import com.example.spyware.common.Constants.Companion.outputFileName
@@ -67,3 +68,19 @@ fun log(context:Context, jsonObject: JSONObject){
     println(jsonObject.toString())
     appendShiftedToFile(context.filesDir,outputFileName, jsonObject.toString(),logShift)
 }
+
+fun downloadHeatMap(context:Context){
+    val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
+    writeShiftedToFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),outputFileName,(content?:""),0)
+}
+
+fun exportHeatMap(context:Context){
+    val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
+    writeShiftedToFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),outputFileName,(content?:""), logShift)
+}
+
+fun importHeatMap(context:Context){
+    val content:String?=readShiftedFromFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),outputFileName,logShift)
+    writeShiftedToFile(context.filesDir,outputFileName,(content?:""), logShift)
+}
+

@@ -11,18 +11,38 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.spyware.ui.theme.SpywareTheme
 import android.provider.Settings
+import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
+import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import appendShiftedToFile
@@ -30,11 +50,16 @@ import com.example.spyware.common.Constants
 import log
 import org.json.JSONObject
 import android.Manifest.permission.POST_NOTIFICATIONS
+import downloadHeatMap
+import exportHeatMap
+import importHeatMap
+import java.io.BufferedReader
 
 class MainActivity : ComponentActivity() {
     private var mobileDialogOpen=false
     private lateinit var gpsReader: GpsReader;
     private lateinit var alarmManger:AlarmManger
+    private val REQUEST_CHECK_SETTINGS = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         println("Created MainActivity")
@@ -42,14 +67,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SpywareTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+            AppContent(this)
         }
 
 
@@ -139,19 +157,106 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun AppContent(context: Context) {
+    var tabIndex by remember { mutableIntStateOf(0) }
+    val tabs = listOf("Main", "Settings")
+    var textState by remember { mutableStateOf("") }
+
+    val exportLauncher = rememberLauncherForActivityResult(CreateDocument("text/plain")) { uri ->
+        uri?.let {
+            context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                outputStream.write(textState.toByteArray())
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(OpenDocument()) { uri ->
+        uri?.let {
+            context.contentResolver.openInputStream(it)?.use { inputStream ->
+                val reader = BufferedReader(inputStream.reader())
+                textState = reader.readText()
+            }
+        }
+    }
+
+    SpywareTheme {
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            Column(modifier = Modifier.padding(innerPadding)) {
+                TabRow(selectedTabIndex = tabIndex) {
+                    tabs.forEachIndexed { index, title ->
+                        Tab(text = { Text(title) },
+                            selected = tabIndex == index,
+                            onClick = { tabIndex = index }
+                        )
+                    }
+                }
+                when (tabIndex) {
+                    0 -> MainTabContent(
+                        textValue = textState,
+                        onTextChange = { textState = it },
+                        onDownloadClick = {
+                            downloadHeatMap(context)
+
+                                          },
+                        onExportClick = {
+                            exportHeatMap(context)
+                        },
+                        onImportClick = {
+                            importHeatMap(context)
+                        }
+                    )
+                    1 -> SettingsTabContent()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MainTabContent(
+    textValue: String,
+    onTextChange: (String) -> Unit,
+    onDownloadClick: () -> Unit,
+    onExportClick: () -> Unit,
+    onImportClick: () -> Unit
+) {
+    Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
+        TextField(
+            value = textValue,
+            onValueChange = onTextChange,
+            modifier = Modifier.fillMaxSize().weight(1f),
+            label = { Text("Enter text here") }
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Row {
+            Button(onClick = onDownloadClick, modifier = Modifier.weight(1f)) {
+                Text("Download")
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(onClick = onExportClick, modifier = Modifier.weight(1f)) {
+                Text("Export")
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(onClick = onImportClick, modifier = Modifier.weight(1f)) {
+                Text("Import")
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsTabContent() {
+    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("This is the Settings Tab. It is currently blank.")
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     SpywareTheme {
-        Greeting("Android")
+        AppContent(context = androidx.compose.ui.platform.LocalContext.current)
     }
-
 }

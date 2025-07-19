@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -53,6 +55,7 @@ import org.json.JSONObject
 import android.Manifest.permission.POST_NOTIFICATIONS
 import downloadHeatMap
 import exportHeatMap
+import getErrorsFromLogs
 import importHeatMap
 import java.io.BufferedReader
 
@@ -195,6 +198,7 @@ fun AppContent(context: Context) {
                 }
                 when (tabIndex) {
                     0 -> MainTabContent(
+                        context,
                         textValue = textState,
                         onTextChange = { textState = it },
                         onDownloadClick = {
@@ -220,19 +224,21 @@ fun AppContent(context: Context) {
 
 @Composable
 fun MainTabContent(
+    context:Context,
     textValue: String,
     onTextChange: (String) -> Unit,
     onDownloadClick: () -> Unit,
     onExportClick: () -> Unit,
     onImportClick: () -> Unit
 ) {
-    Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
-        TextField(
-            value = textValue,
-            onValueChange = onTextChange,
-            modifier = Modifier.fillMaxSize().weight(1f),
-            label = { Text("Enter text here") }
-        )
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxSize()
+    ) {
+        Box(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            Text(getErrorsFromLogs(context))
+        }
         Spacer(modifier = Modifier.height(16.dp))
         Row {
             Button(onClick = onDownloadClick, modifier = Modifier.weight(1f)) {

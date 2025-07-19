@@ -71,6 +71,11 @@ fun log(context:Context, jsonObject: JSONObject){
     appendShiftedToFile(context.filesDir,outputFileName, jsonObject.toString(),logShift)
 }
 
+fun getErrorsFromLogs(context:Context): String {
+    val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
+    return content?:""
+}
+
 fun downloadHeatMap(context:Context){
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
     writeShiftedToFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),outputFileName,(content?:""),0)

@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import android.os.PowerManager
 import android.os.Bundle
 import android.os.Environment
 import android.widget.Toast
@@ -109,6 +110,7 @@ class MainActivity : ComponentActivity() {
                 gpsReader=GpsReader(this)
                 gpsReader.grantLocationPermission(this)
                 gpsReader.turnOnLocation(this)
+                requestBatteryOptimizationPermission()
                 log(this,JSONObject().put("info","Notification permission granted"))
             } else {
                 // Explain to the user that the feature is unavailable because the
@@ -127,9 +129,22 @@ class MainActivity : ComponentActivity() {
             gpsReader=GpsReader(this)
             gpsReader.grantLocationPermission(this)
             gpsReader.turnOnLocation(this)
+            requestBatteryOptimizationPermission()
         }
     }
         // Step 4: Handle result of user's decision
+
+    private fun requestBatteryOptimizationPermission() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                startActivity(intent)
+                log(this,JSONObject().put("info","Requested battery optimization permission"))
+            }
+        }
+    }
 
     fun showEnableInternetDialog(context: Context) {
         if(!isConnectedToInternet(context) && mobileDialogOpen==false) {

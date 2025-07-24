@@ -46,6 +46,7 @@ class GpsReader(private val context: Context) {
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED ) {
             startMainActivity()
+            TimeoutHandler(context).alarm()
             return
         }
 
@@ -69,27 +70,6 @@ class GpsReader(private val context: Context) {
     }
 
     fun startMainActivity(){
-        val intent = Intent(context, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(intent)
-
-//        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-//        val runningTasks = activityManager.appTasks
-//
-//        val isMainActivityOnTop = runningTasks.any { task ->
-//            val baseIntent = task.taskInfo.baseIntent
-//            val topActivity = task.taskInfo.topActivity
-//            topActivity?.className == MainActivity::class.java.name
-//        }
-//
-//        if (!isMainActivityOnTop) {
-//            val intent = Intent(context, MainActivity::class.java).apply {
-//                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//            }
-//            context.startActivity(intent)
-//        }
-
         context.startForegroundService(
             Intent(
                 context,

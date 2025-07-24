@@ -10,7 +10,6 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.PowerManager
 import android.os.Bundle
-import android.os.Environment
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -32,7 +31,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +47,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
-import appendShiftedToFile
 import com.example.spyware.common.Constants
 import log
 import org.json.JSONObject
@@ -185,7 +182,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppContent(context: Context) {
     var tabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Main", "Settings")
+    val tabs = listOf("Errors", "Heatmap")
     var textState by remember { mutableStateOf("") }
 
     val exportLauncher = rememberLauncherForActivityResult(CreateDocument("text/plain")) { uri ->
@@ -235,7 +232,7 @@ fun AppContent(context: Context) {
                             Toast.makeText(context, "Heatmap imported from Documents", Toast.LENGTH_SHORT).show()
                         }
                     )
-                    1 -> SettingsTabContent()
+                    1 -> HeatmapTabContent()
                 }
             }
         }
@@ -277,7 +274,7 @@ fun MainTabContent(
 }
 
 @Composable
-fun SettingsTabContent() {
+fun HeatmapTabContent() {
     Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("This is the Settings Tab. It is currently blank.")
     }

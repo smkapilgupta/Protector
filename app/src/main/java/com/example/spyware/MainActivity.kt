@@ -123,6 +123,11 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationManagerCompat.from(this).areNotificationsEnabled()) {
             requestPermissionLauncher.launch(POST_NOTIFICATIONS)
         }
+        else{
+            gpsReader=GpsReader(this)
+            gpsReader.grantLocationPermission(this)
+            gpsReader.turnOnLocation(this)
+        }
     }
         // Step 4: Handle result of user's decision
 

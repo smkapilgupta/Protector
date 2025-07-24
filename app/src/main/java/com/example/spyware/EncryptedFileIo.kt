@@ -71,9 +71,13 @@ fun log(context:Context, jsonObject: JSONObject){
     appendShiftedToFile(context.filesDir,outputFileName, jsonObject.toString(),logShift)
 }
 
+//fun renderLogs(content:String):String{
+//
+//}
+
 fun getErrorsFromLogs(context:Context): String {
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
-    return content?:""
+    return content?.lines()?.filter { it.contains("\"error\":\"") }?.joinToString("\n") ?: ""
 }
 
 fun downloadHeatMap(context:Context){

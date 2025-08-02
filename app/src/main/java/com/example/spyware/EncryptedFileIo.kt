@@ -86,7 +86,7 @@ fun getFilteredLogs(context:Context): String {
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
     val locationLogs= content?.lines()?.filter { it.contains("\"latitude\":") }?.joinToString("\n") ?: ""
     val result=getImportantLocations(locationLogs)
-    return result.joinToString { "\n" }
+    return result.toString()
 }
 
 fun getImportantLocations(locationLogs:String): List<JSONObject> {
@@ -99,14 +99,21 @@ fun getImportantLocations(locationLogs:String): List<JSONObject> {
 
     val result = mutableListOf<JSONObject>()
     println("halo: ")
-    for (i in 0 until locations.size-4) {
+    var i=0
+    while (i <locations.size-4) {
         if(calculateDistance(locations[i],locations[i+1])<DISTINGUISHING_DISTANCE_KM
-            &&calculateDistance(locations[i],locations[i+2])<DISTINGUISHING_DISTANCE_KM
+            && calculateDistance(locations[i],locations[i+2])<DISTINGUISHING_DISTANCE_KM
             && calculateDistance(locations[i],locations[i+3])<DISTINGUISHING_DISTANCE_KM
             && calculateDistance(locations[i],locations[i+4])<DISTINGUISHING_DISTANCE_KM){
-            println("halo2: "+locations[i])
+            var j=i+5
+            while(j<locations.size && calculateDistance(locations[i],locations[j])< DISTINGUISHING_DISTANCE_KM){
+                j++
+            }
+            println("halo2: "+locations[i].getDouble("latitude")+","+locations[i].getDouble("longitude")+","+locations[i].getString("timestamp")+"-"+locations[j-1].getDouble("latitude")+","+locations[j-1].getDouble("longitude")+","+locations[j-1].getString("timestamp"))
             result.add(locations[i])
+            i=j-1
         }
+        i++
     }
     return result
 }

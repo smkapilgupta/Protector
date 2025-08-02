@@ -86,10 +86,11 @@ fun getFilteredLogs(context:Context): String {
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
     val locationLogs= content?.lines()?.filter { it.contains("\"latitude\":") }?.joinToString("\n") ?: ""
     val result=getImportantLocations(locationLogs)
-    return result.toString()
+    println("halo3\n"+result)
+    return result
 }
 
-fun getImportantLocations(locationLogs:String): List<JSONObject> {
+fun getImportantLocations(locationLogs:String): String {
     val locations= locationLogs.lines()
         .filter { it.isNotBlank() } // Filter out empty lines
         .mapNotNull {
@@ -97,23 +98,17 @@ fun getImportantLocations(locationLogs:String): List<JSONObject> {
             catch (e: Exception) { null } // Handle potential JSON parsing errors
         }
 
-    val result = mutableListOf<JSONObject>()
-    println("halo: ")
+    var result = ""
     var i=0
-    while (i <locations.size-4) {
-        if(calculateDistance(locations[i],locations[i+1])<DISTINGUISHING_DISTANCE_KM
-            && calculateDistance(locations[i],locations[i+2])<DISTINGUISHING_DISTANCE_KM
-            && calculateDistance(locations[i],locations[i+3])<DISTINGUISHING_DISTANCE_KM
-            && calculateDistance(locations[i],locations[i+4])<DISTINGUISHING_DISTANCE_KM){
-            var j=i+5
-            while(j<locations.size && calculateDistance(locations[i],locations[j])< DISTINGUISHING_DISTANCE_KM){
-                j++
-            }
-            println("halo2: "+locations[i].getDouble("latitude")+","+locations[i].getDouble("longitude")+","+locations[i].getString("timestamp")+"-"+locations[j-1].getDouble("latitude")+","+locations[j-1].getDouble("longitude")+","+locations[j-1].getString("timestamp"))
-            result.add(locations[i])
-            i=j-1
+    while (i <locations.size) {
+        var j=i+1
+        while(j<locations.size && calculateDistance(locations[i],locations[j])< DISTINGUISHING_DISTANCE_KM){
+            j++
         }
-        i++
+        if(j-i>=2){
+            result=result+locations[i].getDouble("latitude")+","+locations[i].getDouble("longitude")+","+locations[i].getString("timestamp")+" -> "+locations[j-1].getDouble("latitude")+","+locations[j-1].getDouble("longitude")+","+locations[j-1].getString("timestamp")+"\n"
+        }
+        i=j
     }
     return result
 }

@@ -3,6 +3,8 @@ package com.example.spyware
 import android.Manifest
 import android.app.AlertDialog
 import android.content.Context
+import android.content.ClipboardManager
+import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
@@ -45,6 +47,7 @@ import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.spyware.common.Constants
@@ -282,12 +285,21 @@ fun HeatmapTabContent(    context:Context,
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
+            val clipboardManager: ClipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             Box(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 Text(getFilteredLogs(context))
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = {
+                val textToCopy = getFilteredLogs(context)
+                val clip = ClipData.newPlainText("Copied Text", textToCopy)
+                clipboardManager.setPrimaryClip(clip)
+                Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+            }) {
+                Text("Copy")
+            }
         }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {

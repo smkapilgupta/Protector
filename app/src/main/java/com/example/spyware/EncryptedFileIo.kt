@@ -8,6 +8,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.FileInputStream
 import java.time.Instant
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.math.atan2
@@ -97,21 +98,32 @@ fun getImportantLocations(locationLogs:String): String {
             try { JSONObject(it) }
             catch (e: Exception) { null } // Handle potential JSON parsing errors
         }
-
     var result = ""
     var i=0
     while (i <locations.size) {
+        println("Location: "+locations[i])
         var j=i+1
         while(j<locations.size && calculateDistance(locations[i],locations[j])< DISTINGUISHING_DISTANCE_KM){
             j++
         }
         if(j-i>=2){
-            result=result+locations[i].getDouble("latitude")+","+locations[i].getDouble("longitude")+","+locations[i].getString("timestamp")+" -> "+locations[j-1].getDouble("latitude")+","+locations[j-1].getDouble("longitude")+","+locations[j-1].getString("timestamp")+"\n"
+            var entry=""+locations[i].getDouble("latitude")+","+locations[i].getDouble("longitude")+","+convertUtcToLocal(locations[i].getString("timestamp"))+" -> "+locations[j-1].getDouble("latitude")+","+locations[j-1].getDouble("longitude")+","+convertUtcToLocal(locations[j-1].getString("timestamp"))
+            println("StableLocation: "+entry)
+            result=result+entry+"\n"
         }
         i=j
     }
     return result
 }
+
+fun convertUtcToLocal(utcTime: String): String {
+    val utcFormatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of("UTC"))
+    val instant = Instant.from(utcFormatter.parse(utcTime))
+    val localDateTime = instant.atZone(ZoneId.systemDefault())
+    val outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    return outputFormatter.format(localDateTime)
+}
+
 
 fun calculateDistance(loc1:JSONObject,loc2:JSONObject):Double{
     return calculateDistance(loc1.getDouble("latitude"),loc1.getDouble("longitude"),loc2.getDouble("latitude"),loc2.getDouble("longitude"))
@@ -129,7 +141,7 @@ fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): D
             kotlin.math.sin(lonDistance / 2) * kotlin.math.sin(lonDistance / 2)
 
     val c = 2 * atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
-    println(""+lat1+","+lon1+";"+lat2+","+lon2+":"+(r*c))
+//    println(""+lat1+","+lon1+";"+lat2+","+lon2+":"+(r*c))
     return r * c // Distance in kilometers
 }
 

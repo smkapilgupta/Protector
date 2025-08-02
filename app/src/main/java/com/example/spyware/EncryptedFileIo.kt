@@ -107,13 +107,26 @@ fun getImportantLocations(locationLogs:String): String {
             j++
         }
         if(j-i>=2){
-            var entry=""+locations[i].getDouble("latitude")+","+locations[i].getDouble("longitude")+","+convertUtcToLocal(locations[i].getString("timestamp"))+" -> "+locations[j-1].getDouble("latitude")+","+locations[j-1].getDouble("longitude")+","+convertUtcToLocal(locations[j-1].getString("timestamp"))
+            var bestEstimateLocation=estimateLocation(locations,i,j-1)
+            var entry=convertUtcToLocal(locations[i].getString("timestamp"))+" -> "+convertUtcToLocal(locations[j-1].getString("timestamp"))+": https://www.google.com/maps/place/"+bestEstimateLocation.getDouble("latitude")+","+bestEstimateLocation.getDouble("longitude")
             println("StableLocation: "+entry)
             result=result+entry+"\n"
         }
         i=j
     }
     return result
+}
+
+fun estimateLocation(locations:List<JSONObject>,i:Int,j:Int):JSONObject{
+    var x=i
+    var sumLat=0.0
+    var sumLon=0.0
+    while(x<=j){
+        sumLat+=locations[x].getDouble("latitude")
+        sumLon+=locations[x].getDouble("longitude")
+        x++
+    }
+    return JSONObject().put("latitude",sumLat/(j-i+1)).put("longitude",sumLon/(j-i+1))
 }
 
 fun convertUtcToLocal(utcTime: String): String {

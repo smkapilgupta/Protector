@@ -54,6 +54,7 @@ import android.Manifest.permission.POST_NOTIFICATIONS
 import downloadHeatMap
 import exportHeatMap
 import getErrorsFromLogs
+import getFilteredLogs
 import importHeatMap
 import java.io.BufferedReader
 
@@ -232,7 +233,7 @@ fun AppContent(context: Context) {
                             Toast.makeText(context, "Heatmap imported from Documents", Toast.LENGTH_SHORT).show()
                         }
                     )
-                    1 -> HeatmapTabContent()
+                    1 -> HeatmapTabContent(context)
                 }
             }
         }
@@ -274,10 +275,17 @@ fun MainTabContent(
 }
 
 @Composable
-fun HeatmapTabContent() {
-    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("This is the Settings Tab. It is currently blank.")
-    }
+fun HeatmapTabContent(    context:Context,
+) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize()
+        ) {
+            Box(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                Text(getFilteredLogs(context))
+            }
+        }
 }
 
 @Preview(showBackground = true)

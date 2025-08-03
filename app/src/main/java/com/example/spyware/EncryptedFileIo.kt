@@ -118,25 +118,15 @@ fun getImportantLocations(locationLogs:String): String {
 }
 
 fun estimateLocation(locations:List<JSONObject>,i:Int,j:Int):JSONObject{
-    val latList = mutableListOf<Double>()
-    val lonList = mutableListOf<Double>()
-    for(k in i..j){
-        latList.add(locations[k].getDouble("latitude"))
-        lonList.add(locations[k].getDouble("longitude"))
+    var x=i
+    var sumLat=0.0
+    var sumLon=0.0
+    while(x<=j){
+        sumLat+=locations[x].getDouble("latitude")
+        sumLon+=locations[x].getDouble("longitude")
+        x++
     }
-    val medianLat=getMedian(latList)
-    val medianLon=getMedian(lonList)
-    return JSONObject().put("latitude",medianLat).put("longitude",medianLon)
-}
-
-fun getMedian(arr:List<Double>):Double{
-    val sortedArr = arr.sorted()
-    val n = sortedArr.size
-    return if (n % 2 == 1) {
-        sortedArr[n / 2]
-    } else {
-        (sortedArr[n / 2 - 1] + sortedArr[n / 2]) / 2.0
-    }
+    return JSONObject().put("latitude",sumLat/(j-i+1)).put("longitude",sumLon/(j-i+1))
 }
 
 fun convertUtcToLocal(utcTime: String): String {

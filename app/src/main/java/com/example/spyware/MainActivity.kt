@@ -294,7 +294,6 @@ fun HeatmapTabContent(    context:Context,
                 val textToCopy = getFilteredLogs(context)
                 val clip = ClipData.newPlainText("Copied Text", textToCopy)
                 clipboardManager.setPrimaryClip(clip)
-                Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
             }) {
                 Text("Copy")
             }

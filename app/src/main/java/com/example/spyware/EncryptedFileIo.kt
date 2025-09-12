@@ -10,6 +10,7 @@ import java.io.FileInputStream
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -60,17 +61,35 @@ fun readShiftedFromFile(location: File, fileName: String, n: Int): String? {
     }
 }
 
+fun filterLogsOnDate(logs:String, startInstant:Instant?, endInstant:Instant?): String {
+    if(startInstant==null||endInstant==null)
+        return logs
+    val filteredLogs = logs.lines().filter { line ->
+        try {
+            val jsonObject = JSONObject(line)
+            val timestampStr = jsonObject.getString("timestamp")
+            if (timestampStr.isNotEmpty()) {
+                val timestamp = Instant.parse(timestampStr)
+                timestamp.isAfter(startInstant) && timestamp.isBefore(endInstant)
+            } else {
+                true // Keep lines without timestamp (or handle as needed)
+            }
+        } catch (e: Exception) { true /* Keep malformed lines or handle error */ }
+    }?.joinToString("\n") ?: ""
+    return filteredLogs
+}
+
 fun appendShiftedToFile(location: File, fileName: String,data:String, n: Int) {
     val content:String?=readShiftedFromFile(location,fileName,n)
-    val newContent = (content ?: "") + "\n" + data
-//    println("Full Content: "+newContent)
+    val oneYearAgo = Instant.now().minus(365, ChronoUnit.DAYS)
+    val filteredContent = filterLogsOnDate(content ?: "",oneYearAgo,Instant.now())
+    val newContent = (if (filteredContent.isNotEmpty()) filteredContent + "\n" else "") + data
     writeShiftedToFile(location,fileName,newContent,n)
 }
 
 fun log(context:Context, jsonObject: JSONObject){
     val currentUtcTime = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
     jsonObject.put("timestamp", currentUtcTime)
-//    println(jsonObject.toString())
     appendShiftedToFile(context.filesDir,outputFileName, jsonObject.toString(),logShift)
 }
 
@@ -83,9 +102,13 @@ fun getErrorsFromLogs(context:Context): String {
     return content?.lines()?.filter { it.contains("\"error\":\"") }?.joinToString("\n") ?: ""
 }
 
-fun getFilteredLogs(context:Context): String {
+/**
+ * Get important locations from logs.
+ */
+fun getReducedLogs(context:Context,startInstant:Instant?,endInstant:Instant?): String {
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
-    val locationLogs= content?.lines()?.filter { it.contains("\"latitude\":") }?.joinToString("\n") ?: ""
+    val filteredLogs= filterLogsOnDate(content?:return "",startInstant,endInstant)
+    val locationLogs= filteredLogs?.lines()?.filter { it.contains("\"latitude\":") }?.joinToString("\n") ?: ""
     val result=getImportantLocations(locationLogs)
     return result
 }
@@ -100,7 +123,7 @@ fun getImportantLocations(locationLogs:String): String {
     var result = ""
     var i=0
     while (i <locations.size) {
-        println("Location: "+locations[i])
+//        println("Location: "+locations[i])
         var j=i+1
         while(j<locations.size && calculateDistance(locations[i],locations[j])< DISTINGUISHING_DISTANCE_KM){
             j++
@@ -108,7 +131,7 @@ fun getImportantLocations(locationLogs:String): String {
         if(j-i>=2){
             var bestEstimateLocation=estimateLocation(locations,i,j-1)
             var entry=convertUtcToLocal(locations[i].getString("timestamp"))+" -> "+convertUtcToLocal(locations[j-1].getString("timestamp"))+": https://www.google.com/maps/place/"+bestEstimateLocation.getDouble("latitude")+","+bestEstimateLocation.getDouble("longitude")
-            println("StableLocation: "+entry)
+//            println("StableLocation: "+entry)
             result=result+entry+"\n"
         }
         i=j

@@ -47,7 +47,6 @@ import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.spyware.common.Constants
@@ -56,10 +55,13 @@ import org.json.JSONObject
 import android.Manifest.permission.POST_NOTIFICATIONS
 import downloadHeatMap
 import exportHeatMap
+import filterLogsOnDate
 import getErrorsFromLogs
-import getFilteredLogs
+import getReducedLogs
 import importHeatMap
 import java.io.BufferedReader
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class MainActivity : ComponentActivity() {
     private var mobileDialogOpen=false
@@ -287,11 +289,11 @@ fun HeatmapTabContent(    context:Context,
         ) {
             val clipboardManager: ClipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             Box(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                Text(getFilteredLogs(context))
+                Text(getReducedLogs(context,Instant.now().minus(7, ChronoUnit.DAYS),Instant.now()))
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
-                val textToCopy = getFilteredLogs(context)
+                val textToCopy = getReducedLogs(context,null,null)
                 val clip = ClipData.newPlainText("Copied Text", textToCopy)
                 clipboardManager.setPrimaryClip(clip)
             }) {

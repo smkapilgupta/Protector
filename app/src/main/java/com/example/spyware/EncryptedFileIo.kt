@@ -87,7 +87,6 @@ fun getFilteredLogs(context:Context): String {
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
     val locationLogs= content?.lines()?.filter { it.contains("\"latitude\":") }?.joinToString("\n") ?: ""
     val result=getImportantLocations(locationLogs)
-    println("halo3\n"+result)
     return result
 }
 
@@ -133,7 +132,7 @@ fun convertUtcToLocal(utcTime: String): String {
     val utcFormatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of("UTC"))
     val instant = Instant.from(utcFormatter.parse(utcTime))
     val localDateTime = instant.atZone(ZoneId.systemDefault())
-    val outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    val outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a")
     return outputFormatter.format(localDateTime)
 }
 

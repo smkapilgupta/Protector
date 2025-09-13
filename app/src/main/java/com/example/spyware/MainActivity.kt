@@ -17,6 +17,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,10 +31,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.DatePicker
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +60,7 @@ import com.example.spyware.common.Constants.Companion.ERROR
 import com.example.spyware.common.Constants.Companion.INFO
 import com.example.spyware.common.Constants.Companion.MESSAGE
 import com.example.spyware.common.Constants.Companion.WARNING
+import convertUtcToLocal
 import downloadHeatMap
 import exportHeatMap
 import getErrorStringsFromLogs
@@ -64,7 +68,10 @@ import getReducedLogs
 import getTraversedPath
 import importHeatMap
 import java.io.BufferedReader
+import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.ZoneId
+import java.util.Locale
 import java.time.temporal.ChronoUnit
 
 class MainActivity : ComponentActivity() {
@@ -283,21 +290,76 @@ fun MainTabContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HeatmapTabContent(    context:Context,
 ) {
+    var startDate by remember { mutableStateOf<Instant?>(Instant.now().minus(7, ChronoUnit.DAYS)) }
+    var endDate by remember { mutableStateOf<Instant?>(Instant.now()) }
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
+
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
         Column(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
+            Row {
+                Button(onClick = { showStartDatePicker = true }, modifier = Modifier.weight(1f)) {
+                    Text(startDate?.let { dateFormatter.format(java.util.Date.from(it)) } ?: "Select Start Date")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = { showEndDatePicker = true }, modifier = Modifier.weight(1f)) {
+                    Text(endDate?.let { dateFormatter.format(java.util.Date.from(it)) } ?: "Select End Date")
+                }
+            }
+
+            if (showStartDatePicker) {
+                val datePickerState = rememberDatePickerState(
+                    initialSelectedDateMillis = startDate?.toEpochMilli()
+                )
+                DatePickerDialog(
+                    onDismissRequest = { showStartDatePicker = false },
+                    onConfirm = {
+                        datePickerState.selectedDateMillis?.let {
+                            startDate = Instant.ofEpochMilli(it)
+                        }
+                        showStartDatePicker = false
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
+                }
+            }
+
+            if (showEndDatePicker) {
+                val datePickerState = rememberDatePickerState(
+                    initialSelectedDateMillis = endDate?.toEpochMilli()
+                )
+                DatePickerDialog(
+                    onDismissRequest = { showEndDatePicker = false },
+                    onConfirm = {
+                        datePickerState.selectedDateMillis?.let {
+                            endDate = Instant.ofEpochMilli(it).plus(1, ChronoUnit.DAYS)
+                        }
+                        showEndDatePicker = false
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             val clipboardManager: ClipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             Box(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                Text(getReducedLogs(context,Instant.now().minus(7, ChronoUnit.DAYS),Instant.now()))
+                Text(getReducedLogs(context, startDate, endDate))
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
-                val textToCopy = getTraversedPath(context,Instant.now().minus(24, ChronoUnit.HOURS),Instant.now())+"\n"+getReducedLogs(context,null,null)
+                println("halo: "+convertUtcToLocal(startDate.toString())+","+convertUtcToLocal(endDate.toString()))
+                val textToCopy = getTraversedPath(context, startDate, endDate) + "\n" + getReducedLogs(context, startDate, endDate)
                 val clip = ClipData.newPlainText("Copied Text", textToCopy)
                 clipboardManager.setPrimaryClip(clip)
             }) {
@@ -305,6 +367,31 @@ fun HeatmapTabContent(    context:Context,
             }
         }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DatePickerDialog(
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text("Select Date") },
+        text = content,
+        confirmButton = {
+            Button(onClick = onConfirm) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismissRequest) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {

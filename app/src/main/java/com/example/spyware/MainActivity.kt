@@ -385,7 +385,6 @@ fun HeatmapTabContent(    context:Context,
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
-                println("halo: "+convertUtcToLocal(startDate.toString())+","+convertUtcToLocal(endDate.toString()))
                 val textToCopy = getTraversedPath(context, startDate, endDate) + "\n" + getReducedLogs(context, startDate, endDate)
                 val clip = ClipData.newPlainText("Copied Text", textToCopy)
                 clipboardManager.setPrimaryClip(clip)

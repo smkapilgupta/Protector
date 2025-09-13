@@ -1,12 +1,9 @@
 import android.content.Context
 import android.os.Environment
-import com.example.spyware.common.Constants.Companion.DISTINGUISHING_DISTANCE_KM
-import com.example.spyware.common.Constants.Companion.END_TIMESTAMP
 import com.example.spyware.common.Constants.Companion.ERROR
 import com.example.spyware.common.Constants.Companion.LATITUDE
 import com.example.spyware.common.Constants.Companion.LOG_TIME_TO_LIVE_DAYS
 import com.example.spyware.common.Constants.Companion.LONGITUDE
-import com.example.spyware.common.Constants.Companion.START_TIMESTAMP
 import com.example.spyware.common.Constants.Companion.TIMESTAMP
 import com.example.spyware.common.Constants.Companion.logShift
 import com.example.spyware.common.Constants.Companion.outputFileName
@@ -15,7 +12,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.FileInputStream
 import java.time.Instant
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -138,7 +134,7 @@ fun getReducedLogs(context:Context,startInstant:Instant?,endInstant:Instant?): S
     val filteredLogs= filterLogsOnDate(logs,startInstant,endInstant)
     val locationJSONObjects= filteredLogs.filter { it.has(LATITUDE) }
     val importantLocations=getImportantLocations(locationJSONObjects)
-    return importantLocations.map{ formatHeatmap(it)}.joinToString("\n")
+    return formatHeatmap(importantLocations)
 }
 
 fun getTraversedPath(context:Context,startInstant:Instant?,endInstant:Instant?): String {

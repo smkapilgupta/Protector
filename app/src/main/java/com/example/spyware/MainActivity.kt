@@ -36,6 +36,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.DatePickerDialog as MaterialDatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +51,7 @@ import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.spyware.common.Constants
@@ -324,10 +326,11 @@ fun HeatmapTabContent(    context:Context,
                 val datePickerState = rememberDatePickerState(
                     initialSelectedDateMillis = startDate?.toEpochMilli()
                 )
-                DatePickerDialog(
+                // Using androidx.compose.material3.DatePickerDialog directly
+                MaterialDatePickerDialog(
                     onDismissRequest = { showStartDatePicker = false },
-                    onConfirm = {
-                        datePickerState.selectedDateMillis?.let {
+                    confirmButton = {
+                        Button(onClick = {datePickerState.selectedDateMillis?.let {
                             // Convert selected UTC milliseconds to LocalDate in system default timezone
                             val localDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
                             // Convert LocalDate at start of day in local timezone back to Instant (UTC)
@@ -335,7 +338,13 @@ fun HeatmapTabContent(    context:Context,
 
                         }
                         showStartDatePicker = false
-                    }
+                        }) {
+                            Text("OK")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showStartDatePicker = false }) { Text("Cancel") }
+                    },
                 ) {
                     DatePicker(state = datePickerState)
                 }
@@ -345,10 +354,11 @@ fun HeatmapTabContent(    context:Context,
                 val datePickerState = rememberDatePickerState(
                     initialSelectedDateMillis = endDate?.toEpochMilli()
                 )
-                DatePickerDialog(
+                // Using androidx.compose.material3.DatePickerDialog directly
+                MaterialDatePickerDialog(
                     onDismissRequest = { showEndDatePicker = false },
-                    onConfirm = {
-                        datePickerState.selectedDateMillis?.let {
+                    confirmButton = {
+                        Button(onClick = {datePickerState.selectedDateMillis?.let {
                             // Convert selected UTC milliseconds to LocalDate in system default timezone
                             val localDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
                             // Convert LocalDate at end of day in local timezone back to Instant (UTC)
@@ -356,7 +366,13 @@ fun HeatmapTabContent(    context:Context,
                         }
                         showEndDatePicker = false
                     }
-                ) {
+                        ) {
+                            Text("OK")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showEndDatePicker = false }) { Text("Cancel") }
+                    },                ) {
                     DatePicker(state = datePickerState)
                 }
             }

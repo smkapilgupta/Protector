@@ -17,5 +17,6 @@ class Constants {
         public val TIMESTAMP="timestamp"
         public val START_TIMESTAMP="startTimestamp"
         public val END_TIMESTAMP="endTimestamp"
+        public val LOG_TIME_TO_LIVE_DAYS:Long=365
     }
 }

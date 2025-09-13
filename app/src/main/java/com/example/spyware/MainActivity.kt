@@ -61,6 +61,7 @@ import downloadHeatMap
 import exportHeatMap
 import getErrorStringsFromLogs
 import getReducedLogs
+import getTraversedPath
 import importHeatMap
 import java.io.BufferedReader
 import java.time.Instant
@@ -296,7 +297,7 @@ fun HeatmapTabContent(    context:Context,
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
-                val textToCopy = getReducedLogs(context,null,null)
+                val textToCopy = getTraversedPath(context,Instant.now().minus(24, ChronoUnit.HOURS),Instant.now())+"\n"+getReducedLogs(context,null,null)
                 val clip = ClipData.newPlainText("Copied Text", textToCopy)
                 clipboardManager.setPrimaryClip(clip)
             }) {

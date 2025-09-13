@@ -71,6 +71,8 @@ import java.io.BufferedReader
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.Locale
 import java.time.temporal.ChronoUnit
 
@@ -294,8 +296,10 @@ fun MainTabContent(
 @Composable
 fun HeatmapTabContent(    context:Context,
 ) {
-    var startDate by remember { mutableStateOf<Instant?>(Instant.now().minus(7, ChronoUnit.DAYS)) }
-    var endDate by remember { mutableStateOf<Instant?>(Instant.now()) }
+    var startDate by remember { mutableStateOf<Instant?>(Instant.now().minus(7, ChronoUnit.DAYS)
+        .atZone(ZoneId.systemDefault()).toLocalDate().atTime(0,0,0,1).atZone(ZoneId.systemDefault()).toInstant()) }
+    var endDate by remember { mutableStateOf<Instant?>(Instant.now().atZone(ZoneId.systemDefault())
+        .toLocalDate().atTime(23,59,59,999999999).atZone(ZoneId.systemDefault()).toInstant()) }
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
@@ -324,7 +328,11 @@ fun HeatmapTabContent(    context:Context,
                     onDismissRequest = { showStartDatePicker = false },
                     onConfirm = {
                         datePickerState.selectedDateMillis?.let {
-                            startDate = Instant.ofEpochMilli(it)
+                            // Convert selected UTC milliseconds to LocalDate in system default timezone
+                            val localDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+                            // Convert LocalDate at start of day in local timezone back to Instant (UTC)
+                            startDate = localDate.atTime(0,0,0,1).atZone(ZoneId.systemDefault()).toInstant()
+
                         }
                         showStartDatePicker = false
                     }
@@ -341,7 +349,10 @@ fun HeatmapTabContent(    context:Context,
                     onDismissRequest = { showEndDatePicker = false },
                     onConfirm = {
                         datePickerState.selectedDateMillis?.let {
-                            endDate = Instant.ofEpochMilli(it).plus(1, ChronoUnit.DAYS)
+                            // Convert selected UTC milliseconds to LocalDate in system default timezone
+                            val localDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+                            // Convert LocalDate at end of day in local timezone back to Instant (UTC)
+                            endDate = localDate.atTime(23,59,59,999999999).atZone(ZoneId.systemDefault()).toInstant()
                         }
                         showEndDatePicker = false
                     }

@@ -75,7 +75,7 @@ fun convertUtcToLocal(utcTime: String): String {
     val utcFormatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of("UTC"))
     val instant = Instant.from(utcFormatter.parse(utcTime))
     val localDateTime = instant.atZone(ZoneId.systemDefault())
-    val outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a")
+    val outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a")
     return outputFormatter.format(localDateTime)
 }
 

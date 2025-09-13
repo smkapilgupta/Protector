@@ -1,12 +1,15 @@
 import android.content.Context
 import android.os.Environment
+import com.example.spyware.common.Constants.Companion.END_TIMESTAMP
 import com.example.spyware.common.Constants.Companion.ERROR
 import com.example.spyware.common.Constants.Companion.LATITUDE
 import com.example.spyware.common.Constants.Companion.LOG_TIME_TO_LIVE_DAYS
 import com.example.spyware.common.Constants.Companion.LONGITUDE
+import com.example.spyware.common.Constants.Companion.START_TIMESTAMP
 import com.example.spyware.common.Constants.Companion.TIMESTAMP
 import com.example.spyware.common.Constants.Companion.logShift
 import com.example.spyware.common.Constants.Companion.outputFileName
+import com.example.spyware.common.Constants.Companion.timerSeconds
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
@@ -121,9 +124,28 @@ fun getLogs(context:Context):List<JSONObject>{
     return content?.lines()?.filter { it.isNotBlank() }?.map { JSONObject(it) } ?: listOf()
 }
 
+fun getMissingLogs(logs:List<JSONObject>):List<JSONObject>{
+    val res = mutableListOf<JSONObject>()
+    var i=0
+    for (log in logs) {
+        if(i>0){
+            if(Instant.parse(logs[i].getString(TIMESTAMP)).epochSecond-Instant.parse(logs[i-1].getString(TIMESTAMP)).epochSecond>2*timerSeconds) {
+                res.add(JSONObject().put(ERROR,"Logs missing in between").put(START_TIMESTAMP,logs[i-1].getString(TIMESTAMP)).put(
+                    END_TIMESTAMP,logs[i].getString(TIMESTAMP)))
+            }
+        }
+        i++
+    }
+    return res
+}
+
 fun getErrorStringsFromLogs(context:Context): String {
     val logs=getLogs(context)
-    return logs.filter { log-> log.has(ERROR) }.joinToString("\n") { it.toString() }
+    val errors=logs.filter { log-> log.has(ERROR) }
+    val missingLogs=getMissingLogs(logs).map{log -> val newLog = JSONObject(log.toString()); newLog.put(START_TIMESTAMP,log.getString(START_TIMESTAMP)).put(END_TIMESTAMP,log.getString(END_TIMESTAMP)); newLog}
+
+    return errors.map{it.getString(ERROR)+" | "+convertUtcToLocal(it.getString(TIMESTAMP)) }.joinToString("\n") +"\n"+missingLogs.map{it.getString(ERROR)+" | "+convertUtcToLocal(it.getString(
+        START_TIMESTAMP))+" -> "+convertUtcToLocal(it.getString(END_TIMESTAMP))}.joinToString ( "\n" )
 }
 
 /**

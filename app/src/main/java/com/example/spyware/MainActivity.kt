@@ -263,7 +263,7 @@ fun MainTabContent(
             .fillMaxSize()
     ) {
         Box(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            Text(getErrorsFromLogs(context))
+            Text(getErrorStringsFromLogs(context))
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row {

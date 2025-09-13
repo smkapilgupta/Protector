@@ -39,4 +39,44 @@ fun getGoogleMapsPath(locations:List<JSONObject>): String {
 }
 
 
+fun getImportantLocations(locations:List<JSONObject>): List<JSONObject> {
+    var result = mutableListOf<JSONObject>()
+    var i=0
+    while (i <locations.size) {
+        var j=i+1
+        while(j<locations.size && calculateDistance(locations[i],locations[j])< DISTINGUISHING_DISTANCE_KM){
+            j++
+        }
+        if(j-i>=2){
+            var bestEstimateLocation=estimateLocation(locations,i,j-1)
+            var entry=JSONObject().put(START_TIMESTAMP,locations[i].getString(TIMESTAMP)).put(
+                END_TIMESTAMP,locations[j-1].getString(TIMESTAMP)).put(LATITUDE,bestEstimateLocation.getDouble(
+                LATITUDE)).put(LONGITUDE,bestEstimateLocation.getDouble(LONGITUDE))
+            result.add(entry)
+        }
+        i=j
+    }
+    return result
+}
+
+fun estimateLocation(locations:List<JSONObject>,i:Int,j:Int):JSONObject{
+    var x=i
+    var sumLat=0.0
+    var sumLon=0.0
+    while(x<=j){
+        sumLat+=locations[x].getDouble(LATITUDE)
+        sumLon+=locations[x].getDouble(LONGITUDE)
+        x++
+    }
+    return JSONObject().put(LATITUDE,sumLat/(j-i+1)).put(LONGITUDE,sumLon/(j-i+1))
+}
+
+fun convertUtcToLocal(utcTime: String): String {
+    val utcFormatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of("UTC"))
+    val instant = Instant.from(utcFormatter.parse(utcTime))
+    val localDateTime = instant.atZone(ZoneId.systemDefault())
+    val outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a")
+    return outputFormatter.format(localDateTime)
+}
+
 

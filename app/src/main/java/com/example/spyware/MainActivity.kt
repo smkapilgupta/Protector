@@ -17,7 +17,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,7 +50,6 @@ import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.spyware.common.Constants
@@ -62,19 +60,17 @@ import com.example.spyware.common.Constants.Companion.ERROR
 import com.example.spyware.common.Constants.Companion.INFO
 import com.example.spyware.common.Constants.Companion.MESSAGE
 import com.example.spyware.common.Constants.Companion.WARNING
-import convertUtcToLocal
 import downloadHeatMap
 import exportHeatMap
 import getErrorStringsFromLogs
 import getReducedLogs
 import getTraversedPath
 import importHeatMap
+import resetLogCache
 import java.io.BufferedReader
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
-import java.time.LocalDate
-import java.time.ZoneOffset
 import java.util.Locale
 import java.time.temporal.ChronoUnit
 
@@ -82,7 +78,6 @@ class MainActivity : ComponentActivity() {
     private var mobileDialogOpen=false
     private lateinit var gpsReader: GpsReader;
     private lateinit var alarmManger:AlarmManger
-    private val REQUEST_CHECK_SETTINGS = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         println("Created MainActivity")
@@ -119,6 +114,18 @@ class MainActivity : ComponentActivity() {
         println("Resumed MainActivity")
         super.onResume()
         showEnableInternetDialog(this)
+    }
+
+    override fun onPause() {
+        println("Paused MainActivity")
+        super.onPause()
+        resetLogCache()
+    }
+
+    override fun onDestroy() {
+        println("Destroyed MainActivity")
+        super.onDestroy()
+        resetLogCache()
     }
 
     private val requestPermissionLauncher =

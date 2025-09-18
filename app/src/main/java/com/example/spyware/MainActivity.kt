@@ -424,7 +424,7 @@ fun HeatmapTabContent(    context:Context,
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(onClick = {
                     val traversedPath = getTraversedPath(context, startDate, endDate)
-                    if (traversedPath.isNotEmpty()) {
+                    if (traversedPath!="https://www.google.co.in/maps/dir") {
                         val gmmIntentUri = Uri.parse(traversedPath)
                         val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
                         mapIntent.setPackage("com.google.android.apps.maps")

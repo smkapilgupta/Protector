@@ -385,19 +385,21 @@ fun HeatmapTabContent(    context:Context,
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            val clipboardManager: ClipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             Box(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 Text(getReducedLogs(context, startDate, endDate))
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
-                val textToCopy = getTraversedPath(context, startDate, endDate) + "\n" + getReducedLogs(context, startDate, endDate)
-                val clip = ClipData.newPlainText("Copied Text", textToCopy)
-                clipboardManager.setPrimaryClip(clip)
-            }) {
-                Text("Copy")
-            }
+                val textToShare = getTraversedPath(context, startDate, endDate) + "\n" + getReducedLogs(context, startDate, endDate)
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, textToShare)
+                    type = "text/plain"
+                }
+                val shareIntent = Intent.createChooser(sendIntent, null)
+                context.startActivity(shareIntent)
+            }) { Text("Share") }
+
         }
 }
 

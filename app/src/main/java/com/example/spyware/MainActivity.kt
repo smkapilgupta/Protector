@@ -56,6 +56,7 @@ import com.example.spyware.common.Constants
 import log
 import org.json.JSONObject
 import android.Manifest.permission.POST_NOTIFICATIONS
+import android.net.Uri
 import com.example.spyware.common.Constants.Companion.ERROR
 import com.example.spyware.common.Constants.Companion.INFO
 import com.example.spyware.common.Constants.Companion.MESSAGE
@@ -321,11 +322,13 @@ fun HeatmapTabContent(    context:Context,
         ) {
             Row {
                 Button(onClick = { showStartDatePicker = true }, modifier = Modifier.weight(1f)) {
-                    Text(startDate?.let { dateFormatter.format(java.util.Date.from(it)) } ?: "Select Start Date")
+                    Text(startDate?.let { dateFormatter.format(java.util.Date.from(it)) }
+                        ?: "Select Start Date")
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(onClick = { showEndDatePicker = true }, modifier = Modifier.weight(1f)) {
-                    Text(endDate?.let { dateFormatter.format(java.util.Date.from(it)) } ?: "Select End Date")
+                    Text(endDate?.let { dateFormatter.format(java.util.Date.from(it)) }
+                        ?: "Select End Date")
                 }
             }
 
@@ -337,14 +340,19 @@ fun HeatmapTabContent(    context:Context,
                 MaterialDatePickerDialog(
                     onDismissRequest = { showStartDatePicker = false },
                     confirmButton = {
-                        Button(onClick = {datePickerState.selectedDateMillis?.let {
-                            // Convert selected UTC milliseconds to LocalDate in system default timezone
-                            val localDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
-                            // Convert LocalDate at start of day in local timezone back to Instant (UTC)
-                            startDate = localDate.atTime(0,0,0,1).atZone(ZoneId.systemDefault()).toInstant()
+                        Button(onClick = {
+                            datePickerState.selectedDateMillis?.let {
+                                // Convert selected UTC milliseconds to LocalDate in system default timezone
+                                val localDate =
+                                    Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault())
+                                        .toLocalDate()
+                                // Convert LocalDate at start of day in local timezone back to Instant (UTC)
+                                startDate =
+                                    localDate.atTime(0, 0, 0, 1).atZone(ZoneId.systemDefault())
+                                        .toInstant()
 
-                        }
-                        showStartDatePicker = false
+                            }
+                            showStartDatePicker = false
                         }) {
                             Text("OK")
                         }
@@ -365,21 +373,26 @@ fun HeatmapTabContent(    context:Context,
                 MaterialDatePickerDialog(
                     onDismissRequest = { showEndDatePicker = false },
                     confirmButton = {
-                        Button(onClick = {datePickerState.selectedDateMillis?.let {
-                            // Convert selected UTC milliseconds to LocalDate in system default timezone
-                            val localDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
-                            // Convert LocalDate at end of day in local timezone back to Instant (UTC)
-                            endDate = localDate.atTime(23,59,59,999999999).atZone(ZoneId.systemDefault()).toInstant()
+                        Button(onClick = {
+                            datePickerState.selectedDateMillis?.let {
+                                // Convert selected UTC milliseconds to LocalDate in system default timezone
+                                val localDate =
+                                    Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault())
+                                        .toLocalDate()
+                                // Convert LocalDate at end of day in local timezone back to Instant (UTC)
+                                endDate = localDate.atTime(23, 59, 59, 999999999)
+                                    .atZone(ZoneId.systemDefault()).toInstant()
+                            }
+                            showEndDatePicker = false
                         }
-                        showEndDatePicker = false
-                    }
                         ) {
                             Text("OK")
                         }
                     },
                     dismissButton = {
                         Button(onClick = { showEndDatePicker = false }) { Text("Cancel") }
-                    },                ) {
+                    },
+                ) {
                     DatePicker(state = datePickerState)
                 }
             }
@@ -389,16 +402,36 @@ fun HeatmapTabContent(    context:Context,
                 Text(getReducedLogs(context, startDate, endDate))
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = {
-                val textToShare = getTraversedPath(context, startDate, endDate) + "\n" + getReducedLogs(context, startDate, endDate)
-                val sendIntent: Intent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_TEXT, textToShare)
-                    type = "text/plain"
-                }
-                val shareIntent = Intent.createChooser(sendIntent, null)
-                context.startActivity(shareIntent)
-            }) { Text("Share") }
+            Row {
+                Button(onClick = {
+                    val textToShare =
+                        getTraversedPath(context, startDate, endDate) + "\n" + getReducedLogs(
+                            context,
+                            startDate,
+                            endDate
+                        )
+                    val sendIntent: Intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, textToShare)
+                        type = "text/plain"
+                    }
+                    val shareIntent = Intent.createChooser(sendIntent, null)
+                    context.startActivity(shareIntent)
+                }) { Text("Share") }
+
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = {
+                    val traversedPath = getTraversedPath(context, startDate, endDate)
+                    if (traversedPath.isNotEmpty()) {
+                        val gmmIntentUri = Uri.parse(traversedPath)
+                        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                        mapIntent.setPackage("com.google.android.apps.maps")
+                        context.startActivity(mapIntent)
+                    } else {
+                        Toast.makeText(context, "No path data to display", Toast.LENGTH_SHORT).show()
+                    }
+                }) { Text("View path") }
+        }
 
         }
 }

@@ -334,7 +334,9 @@ fun HeatmapTabContent(    context:Context,
 
             if (showStartDatePicker) {
                 val datePickerState = rememberDatePickerState(
-                    initialSelectedDateMillis = startDate?.toEpochMilli()
+                    initialSelectedDateMillis = startDate?.atZone(ZoneId.systemDefault())
+                        ?.toLocalDate()?.atTime(12, 0, 0, 1)?.atZone(ZoneId.systemDefault())
+                    ?.toInstant()?.toEpochMilli()
                 )
                 // Using androidx.compose.material3.DatePickerDialog directly
                 MaterialDatePickerDialog(
@@ -434,30 +436,6 @@ fun HeatmapTabContent(    context:Context,
         }
 
         }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DatePickerDialog(
-    onDismissRequest: () -> Unit,
-    onConfirm: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismissRequest,
-        title = { Text("Select Date") },
-        text = content,
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            Button(onClick = onDismissRequest) {
-                Text("Cancel")
-            }
-        }
-    )
 }
 
 @Preview(showBackground = true)

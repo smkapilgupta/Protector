@@ -64,6 +64,7 @@ import com.example.spyware.common.Constants.Companion.WARNING
 import downloadHeatMap
 import exportHeatMap
 import getErrorStringsFromLogs
+import getLogs
 import getReducedLogs
 import getTraversedPath
 import importHeatMap
@@ -114,6 +115,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         println("Resumed MainActivity")
         super.onResume()
+        getLogs(this)
         showEnableInternetDialog(this)
     }
 
